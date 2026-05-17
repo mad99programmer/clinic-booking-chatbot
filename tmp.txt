@@ -1,0 +1,114 @@
+-- =========================
+-- INSERT DOCTORS
+-- =========================
+
+INSERT INTO doctors
+(
+    name,
+    specialization,
+    qualification,
+    experience_years,
+    consultation_fee,
+    consultation_duration,
+    is_active
+)
+
+VALUES
+
+(
+    'Dr Shah',
+    'Cardiologist',
+    'MBBS, MD',
+    10,
+    1000,
+    30,
+    true
+),
+
+(
+    'Dr Mehta',
+    'Dentist',
+    'BDS, MDS',
+    7,
+    700,
+    30,
+    true
+),
+
+(
+    'Dr Rao',
+    'General Physician',
+    'MBBS',
+    12,
+    500,
+    20,
+    true
+);
+
+
+
+-- =========================
+-- INSERT DOCTOR AVAILABILITY
+-- =========================
+
+INSERT INTO doctor_availability
+(
+    doctor_id,
+    weekday,
+    start_time,
+    end_time,
+    is_active
+)
+
+VALUES
+
+-- Dr Shah
+(
+    1,
+    'Monday',
+    '10:00',
+    '13:00',
+    true
+),
+
+(
+    1,
+    'Friday',
+    '19:00',
+    '21:30',
+    true
+),
+
+-- Dr Mehta
+(
+    2,
+    'Tuesday',
+    '11:00',
+    '15:00',
+    true
+),
+
+(
+    2,
+    'Saturday',
+    '10:00',
+    '14:00',
+    true
+),
+
+-- Dr Rao
+(
+    3,
+    'Monday',
+    '09:00',
+    '12:00',
+    true
+),
+
+(
+    3,
+    'Wednesday',
+    '17:00',
+    '20:00',
+    true
+);
