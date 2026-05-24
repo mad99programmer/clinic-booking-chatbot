@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>City Clinic — Slots</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+        serif: ['Fraunces', 'serif'],
+      },
+      colors: {
+        purple: {
+          50:'#f4f2ff',
+          100:'#ebe8ff',
+          200:'#d4ccff',
+          300:'#b0a4f5',
+          400:'#8b7ce8',
+          500:'#6650d8',
+          600:'#5340c0',
+          700:'#3d2b96',
+          800:'#2d1f6e',
+          900:'#1a1040',
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  background:#f8f7ff;
+  font-family:'Outfit',sans-serif;
+}
+
+.nav-item{
+  transition:all .15s;
+}
+
+.nav-item:hover{
+  background:rgba(83,64,192,.08);
+  color:#3d2b96;
+}
+
+.nav-item.active{
+  background:linear-gradient(135deg,#5340c0,#3d2b96);
+  color:white!important;
+}
+
+.slot-row:hover{
+  background:#f4f2ff;
+}
+
+#drawer{
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+
+#drawer-backdrop{
+  transition:opacity .3s;
+}
+
+.field-label{
+  font-size:11px;
+  font-weight:600;
+  color:#8b7ce8;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+  margin-bottom:4px;
+  display:block;
+}
+
+.field-input{
+  width:100%;
+  background:#f4f2ff;
+  border:1.5px solid #d4ccff;
+  border-radius:12px;
+  padding:10px 14px;
+  outline:none;
+}
+
+.field-input:focus{
+  border-color:#5340c0;
+  box-shadow:0 0 0 3px rgba(83,64,192,.12);
+}
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- SIDEBAR -->
+<aside class="fixed top-0 left-0 h-full w-60 bg-white border-r border-purple-100 flex flex-col z-40">
+
+  <div class="px-5 py-5 border-b border-purple-50">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-purple-700 grid place-items-center text-white">
+        🏥
+      </div>
+
+      <div>
+        <div class="font-serif font-bold text-purple-900">
+          City Clinic
+        </div>
+
+        <div class="text-[10px] text-purple-400 uppercase tracking-widest">
+          Admin Panel
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 px-3 py-4 flex flex-col gap-1">
+
+    <a href="dashboard.html"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-purple-600">
+      📊 Dashboard
+    </a>
+
+    <a href="appointments.html"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-purple-600">
+      📅 Appointments
+    </a>
+
+    <a href="slots.html"
+       class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
+      🕐 Slots
+    </a>
+
+    <a href="doctors.html"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-purple-600">
+      👨‍⚕️ Doctors
+    </a>
+
+    <a href="patients.html"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-purple-600">
+      👥 Patients
+    </a>
+
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="ml-60 min-h-screen flex flex-col">
+
+  <!-- TOPBAR -->
+  <header class="bg-white border-b border-purple-100 h-[60px] flex items-center px-8">
+
+    <div>
+      <h1 class="font-serif font-bold text-purple-900 text-lg">
+        Slots
+      </h1>
+    </div>
+
+    <div class="ml-auto flex items-center gap-3">
+
+      <button onclick="openDrawer('single')"
+        class="bg-purple-700 hover:bg-purple-800 text-white text-sm font-semibold px-4 py-2 rounded-xl">
+        + Add Slot
+      </button>
+
+      <button onclick="openDrawer('bulk')"
+        class="border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-semibold px-4 py-2 rounded-xl">
+        + Bulk Generate
+      </button>
+
+    </div>
+
+  </header>
+
+  <!-- CONTENT -->
+  <main class="flex-1 px-8 py-7">
+
+    <!-- FILTERS -->
+    <div class="bg-white border border-purple-100 rounded-2xl p-5 mb-5">
+
+      <div class="flex flex-wrap gap-3">
+
+        <select id="filter-doctor"
+          onchange="loadSlots()"
+          class="field-input max-w-[220px]">
+          <option value="">All doctors</option>
+        </select>
+
+        <input type="date"
+          id="filter-date"
+          onchange="loadSlots()"
+          class="field-input max-w-[200px]">
+
+        <select id="filter-status"
+          onchange="loadSlots()"
+          class="field-input max-w-[200px]">
+
+          <option value="">All statuses</option>
+          <option value="available">Available</option>
+          <option value="booked">Booked</option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white border border-purple-100 rounded-2xl overflow-hidden">
+
+      <div class="px-6 py-4 border-b border-purple-50">
+        <h3 class="font-semibold text-purple-900">
+          All Slots
+        </h3>
+      </div>
+
+      <div class="overflow-x-auto">
+
+        <table class="w-full text-sm">
+
+          <thead>
+
+            <tr class="bg-purple-50/50 border-b border-purple-50">
+
+              <th class="text-left px-6 py-3 text-purple-400 text-xs uppercase">
+                Doctor
+              </th>
+
+              <th class="text-left px-4 py-3 text-purple-400 text-xs uppercase">
+                Date
+              </th>
+
+              <th class="text-left px-4 py-3 text-purple-400 text-xs uppercase">
+                Start
+              </th>
+
+              <th class="text-left px-4 py-3 text-purple-400 text-xs uppercase">
+                End
+              </th>
+
+              <th class="text-left px-4 py-3 text-purple-400 text-xs uppercase">
+                Status
+              </th>
+
+              <th class="px-4 py-3"></th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="slots-tbody">
+
+            <tr>
+              <td colspan="6"
+                class="text-center px-6 py-10 text-purple-300">
+                Loading slots...
+              </td>
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+<!-- DRAWER BACKDROP -->
+<div id="drawer-backdrop"
+  class="fixed inset-0 bg-black/30 hidden z-40"
+  onclick="closeDrawer()">
+</div>
+
+<!-- DRAWER -->
+<div id="drawer"
+  class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 translate-x-full flex flex-col border-l border-purple-100">
+
+  <!-- HEADER -->
+  <div class="px-6 py-5 border-b border-purple-50 flex items-center justify-between">
+
+    <div>
+      <h2 id="drawer-title"
+        class="font-serif font-bold text-purple-900 text-lg">
+        Add Slot
+      </h2>
+    </div>
+
+    <button onclick="closeDrawer()"
+      class="text-purple-400 text-2xl">
+      ×
+    </button>
+
+  </div>
+
+  <!-- BODY -->
+  <div class="flex-1 overflow-y-auto px-6 py-5">
+
+    <form id="slot-form">
+
+      <div class="grid gap-4">
+
+        <!-- doctor -->
+        <div>
+          <label class="field-label">Doctor</label>
+
+          <select id="doctor-id"
+            class="field-input"
+            required>
+          </select>
+        </div>
+
+        <!-- single slot fields -->
+        <div id="single-fields">
+
+          <div class="grid gap-4">
+
+            <div>
+              <label class="field-label">Date</label>
+
+              <input type="date"
+                id="slot-date"
+                class="field-input">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+
+              <div>
+                <label class="field-label">Start Time</label>
+
+                <input type="time"
+                  id="start-time"
+                  class="field-input">
+              </div>
+
+              <div>
+                <label class="field-label">End Time</label>
+
+                <input type="time"
+                  id="end-time"
+                  class="field-input">
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- bulk fields -->
+        <div id="bulk-fields" class="hidden">
+
+          <div class="grid gap-4">
+
+            <div class="grid grid-cols-2 gap-3">
+
+              <div>
+                <label class="field-label">From Date</label>
+
+                <input type="date"
+                  id="from-date"
+                  class="field-input">
+              </div>
+
+              <div>
+                <label class="field-label">To Date</label>
+
+                <input type="date"
+                  id="to-date"
+                  class="field-input">
+              </div>
+
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+
+              <div>
+                <label class="field-label">Start Time</label>
+
+                <input type="time"
+                  id="bulk-start-time"
+                  class="field-input">
+              </div>
+
+              <div>
+                <label class="field-label">End Time</label>
+
+                <input type="time"
+                  id="bulk-end-time"
+                  class="field-input">
+              </div>
+
+            </div>
+
+            <div>
+              <label class="field-label">
+                Slot Duration
+              </label>
+
+              <select id="duration"
+                class="field-input">
+
+                <option value="15">15 mins</option>
+                <option value="20">20 mins</option>
+                <option value="30">30 mins</option>
+                <option value="45">45 mins</option>
+
+              </select>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="px-6 py-4 border-t border-purple-50 flex gap-3">
+
+    <button onclick="closeDrawer()"
+      class="flex-1 border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-semibold py-2.5 rounded-xl">
+
+      Cancel
+
+    </button>
+
+    <button onclick="submitForm()"
+      class="flex-1 bg-purple-700 hover:bg-purple-800 text-white text-sm font-semibold py-2.5 rounded-xl">
+
+      Save
+
+    </button>
+
+  </div>
+
+</div>
+
+<script>
+
+const API = 'http://localhost:8000';
+
+let drawerMode = 'single';
+
+async function loadDoctors() {
+
+  const res = await fetch(`${API}/admin/doctors`);
+  const doctors = await res.json();
+
+  const selects = [
+    document.getElementById('doctor-id'),
+    document.getElementById('filter-doctor')
+  ];
+
+  selects.forEach(select => {
+
+    if(select.id === 'filter-doctor'){
+      select.innerHTML = '<option value="">All doctors</option>';
+    } else {
+      select.innerHTML = '';
+    }
+
+    doctors.forEach(doc => {
+
+      const option = document.createElement('option');
+
+      option.value = doc.id;
+      option.textContent = doc.name;
+
+      select.appendChild(option);
+
+    });
+
+  });
+
+}
+
+async function loadSlots(){
+
+  const doctor = document.getElementById('filter-doctor').value;
+  const date   = document.getElementById('filter-date').value;
+  const status = document.getElementById('filter-status').value;
+
+  let url = `${API}/admin/slots?`;
+
+  if(doctor){
+    url += `doctor_id=${doctor}&`;
+  }
+
+  if(date){
+    url += `slot_date=${date}&`;
+  }
+
+  if(status){
+    url += `status=${status}`;
+  }
+
+  const res = await fetch(url);
+
+  const slots = await res.json();
+
+  const tbody = document.getElementById('slots-tbody');
+
+  if(!slots.length){
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6"
+          class="text-center px-6 py-10 text-purple-300">
+          No slots found
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  tbody.innerHTML = '';
+
+  slots.forEach(slot => {
+
+    tbody.innerHTML += `
+      <tr class="slot-row border-b border-purple-50">
+
+        <td class="px-6 py-4 font-medium text-purple-900">
+          ${slot.doctor_name}
+        </td>
+
+        <td class="px-4 py-4 text-purple-700">
+          ${slot.date}
+        </td>
+
+        <td class="px-4 py-4 text-purple-700">
+          ${slot.start_time}
+        </td>
+
+        <td class="px-4 py-4 text-purple-700">
+          ${slot.end_time}
+        </td>
+
+        <td class="px-4 py-4">
+
+          ${
+            slot.status === 'available'
+
+            ?
+
+            `<span class="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
+              Available
+            </span>`
+
+            :
+
+            `<span class="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
+              Booked
+            </span>`
+          }
+
+        </td>
+
+        <td class="px-4 py-4 text-right">
+
+          ${
+            slot.status === 'available'
+
+            ?
+
+            `<button
+              onclick="deleteSlot(${slot.id})"
+              class="text-red-500 hover:text-red-700 text-xs font-semibold">
+              Delete
+            </button>`
+
+            :
+
+            ''
+          }
+
+        </td>
+
+      </tr>
+    `;
+
+  });
+
+}
+
+function openDrawer(mode){
+
+  drawerMode = mode;
+
+  document.getElementById('drawer-backdrop').classList.remove('hidden');
+  document.getElementById('drawer').classList.remove('translate-x-full');
+
+  if(mode === 'single'){
+
+    document.getElementById('drawer-title').textContent = 'Add Slot';
+
+    document.getElementById('single-fields').classList.remove('hidden');
+    document.getElementById('bulk-fields').classList.add('hidden');
+
+  } else {
+
+    document.getElementById('drawer-title').textContent = 'Bulk Generate Slots';
+
+    document.getElementById('single-fields').classList.add('hidden');
+    document.getElementById('bulk-fields').classList.remove('hidden');
+
+  }
+
+}
+
+function closeDrawer(){
+
+  document.getElementById('drawer-backdrop').classList.add('hidden');
+  document.getElementById('drawer').classList.add('translate-x-full');
+
+}
+
+async function submitForm(){
+
+  if(drawerMode === 'single'){
+
+    const payload = {
+
+      doctor_id: parseInt(document.getElementById('doctor-id').value),
+
+      slot_date: document.getElementById('slot-date').value,
+
+      start_time: document.getElementById('start-time').value,
+
+      end_time: document.getElementById('end-time').value
+
+    };
+
+    await fetch(`${API}/admin/slots`,{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify(payload)
+
+    });
+
+  }
+
+  else {
+
+    const payload = {
+
+      doctor_id: parseInt(document.getElementById('doctor-id').value),
+
+      from_date: document.getElementById('from-date').value,
+
+      to_date: document.getElementById('to-date').value,
+
+      start_time: document.getElementById('bulk-start-time').value,
+
+      end_time: document.getElementById('bulk-end-time').value,
+
+      slot_duration_minutes: parseInt(document.getElementById('duration').value),
+
+      skip_sundays: true
+
+    };
+
+    await fetch(`${API}/admin/slots/bulk`,{
+
+      method:'POST',
+
+      headers:{
+        'Content-Type':'application/json'
+      },
+
+      body:JSON.stringify(payload)
+
+    });
+
+  }
+
+  closeDrawer();
+  loadSlots();
+
+}
+
+async function deleteSlot(id){
+
+  if(!confirm('Delete this slot?')){
+    return;
+  }
+
+  await fetch(`${API}/admin/slots/${id}`,{
+    method:'DELETE'
+  });
+
+  loadSlots();
+
+}
+
+loadDoctors();
+loadSlots();
+
+</script>
+
+</body>
+</html>

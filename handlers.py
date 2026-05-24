@@ -1,3 +1,4 @@
+from ai_receptionist import suggest_specialization
 from models import User, UserSession, Doctor, Appointment
 from crud import (
     get_specializations,
@@ -5,7 +6,7 @@ from crud import (
     get_available_dates,
     get_available_slots,
 )
-from vaildators import is_valid_name, is_valid_email
+from validators import is_valid_name, is_valid_email, is_valid_age
 from messaging import display_menu
 
 
@@ -48,7 +49,7 @@ def process_message(user_number, incoming_msg, db):
             session.temp_name = None
             session.temp_email = None
             session.temp_gender = None
-
+            session.temp_age    = None
             session.selected_specialization = None
             session.selected_doctor_id = None
             session.selected_slot_id = None
@@ -148,19 +149,51 @@ def process_message(user_number, incoming_msg, db):
 
             session.temp_gender = gender_map[normalized_msg]
 
-            session.current_step = "confirming_details"
+            session.current_step = "collecting_age"
 
             db.commit()
 
             reply = (
+                "Please enter your age.\n\n"
+                "Example: 25"
+            )
+
+    # =========================
+    # HANDLE AGE COLLECTION
+    # =========================
+    elif session and session.current_step == "collecting_age":
+ 
+        if normalized_msg in MENU_COMMANDS:
+ 
+            reply = (
+                "🔢 Please enter your age to continue."
+            )
+ 
+        elif not is_valid_age(incoming_msg):
+ 
+            reply = (
+                "⚠️ Please enter a valid age.\n\n"
+                "Example: 25"
+            )
+ 
+        else:
+ 
+            session.temp_age = int(incoming_msg.strip())
+ 
+            session.current_step = "confirming_details"
+ 
+            db.commit()
+ 
+            reply = (
                 f"Please confirm your details:\n\n"
                 f"👤 Name: {session.temp_name}\n"
                 f"📧 Email: {session.temp_email}\n"
-                f"⚧ Gender: {session.temp_gender}\n\n"
+                f"⚧ Gender: {session.temp_gender}\n"
+                f"🎂 Age: {session.temp_age}\n\n"
                 f"1️⃣ Yes, confirm\n"
                 f"2️⃣ No, start over"
             )
-
+ 
     # =========================
     # HANDLE DETAILS CONFIRMATION
     # =========================
@@ -173,7 +206,8 @@ def process_message(user_number, incoming_msg, db):
                 phone_number=user_number,
                 name=session.temp_name,
                 email=session.temp_email,
-                gender=session.temp_gender
+                gender=session.temp_gender,
+                age=session.temp_age
             )
 
             db.add(new_user)
@@ -181,7 +215,7 @@ def process_message(user_number, incoming_msg, db):
             session.temp_name = None
             session.temp_email = None
             session.temp_gender = None
-
+            session.temp_age    = None
             session.current_step = "selecting_specialization"
 
             db.commit()
@@ -217,7 +251,7 @@ def process_message(user_number, incoming_msg, db):
             session.temp_name = None
             session.temp_email = None
             session.temp_gender = None
-
+            session.temp_age    = None
             session.current_step = "collecting_name"
 
             db.commit()
@@ -262,7 +296,7 @@ def process_message(user_number, incoming_msg, db):
                 )
 
             else:
-                pass
+                
                 # AI receptionist selected
                 if selected_index == len(specializations):
 
@@ -321,9 +355,7 @@ def process_message(user_number, incoming_msg, db):
     # =========================
     elif ( session and session.current_step == "ai_symptom_collection" ):
 
-        from ai_receptionist import (
-            suggest_specialization
-        )
+        
 
         specializations = get_specializations(db)
 

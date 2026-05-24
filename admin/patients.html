@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Clinic — Patients</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+        serif: ['Fraunces', 'serif'],
+      },
+      colors: {
+        purple: {
+          50:  '#f4f2ff', 100: '#ebe8ff', 200: '#d4ccff',
+          300: '#b0a4f5', 400: '#8b7ce8', 500: '#6650d8',
+          600: '#5340c0', 700: '#3d2b96', 800: '#2d1f6e', 900: '#1a1040',
+        },
+        green: { 400: '#4fe898', 500: '#22d47a', 600: '#17a85f' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { background: #f8f7ff; font-family: 'Outfit', sans-serif; }
+
+  #sidebar { scrollbar-width: none; }
+  #sidebar::-webkit-scrollbar { display: none; }
+
+  .nav-item { transition: all 0.15s; }
+  .nav-item:hover { background: rgba(83,64,192,0.08); color: #3d2b96; }
+  .nav-item.active {
+    background: linear-gradient(135deg, #5340c0, #3d2b96);
+    color: white !important;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3px; background: #22d47a;
+    border-radius: 0 3px 3px 0;
+  }
+
+  .blob { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; }
+
+  .patient-row { transition: background 0.1s; }
+  .patient-row:hover { background: #f4f2ff; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .fade-up  { animation: fadeUp 0.5s ease both; }
+  .delay-1  { animation-delay: 0.05s; }
+  .delay-2  { animation-delay: 0.10s; }
+
+  .skeleton {
+    background: linear-gradient(90deg, #e8e4f8 25%, #f0ecff 50%, #e8e4f8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(83,64,192,0.2); border-radius: 99px; }
+
+  /* detail drawer */
+  #drawer { transition: transform 0.3s cubic-bezier(.4,0,.2,1); }
+  #drawer-backdrop { transition: opacity 0.3s; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- MOBILE OVERLAY -->
+<div id="overlay" class="fixed inset-0 bg-purple-900/40 z-40 hidden lg:hidden backdrop-blur-sm" onclick="closeSidebar()"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-60 bg-white border-r border-purple-100 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto shadow-xl shadow-purple-100">
+  <div class="px-5 py-5 border-b border-purple-50">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-purple-700 grid place-items-center text-lg flex-shrink-0 shadow-lg shadow-purple-200">🏥</div>
+      <div>
+        <div class="font-serif font-bold text-purple-900 text-base leading-tight">City Clinic</div>
+        <div class="text-[10px] text-purple-400 uppercase tracking-widest font-medium">Admin Panel</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 px-3 py-4 flex flex-col gap-0.5">
+    <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2">Main</div>
+    <a href="dashboard.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">📊</span> Dashboard</a>
+    <a href="appointments.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">📅</span> Appointments</a>
+    <a href="slots.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">🕐</span> Slots</a>
+    <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2 mt-4">Manage</div>
+    <a href="doctors.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">👨‍⚕️</span> Doctors</a>
+    <a href="patients.html" class="nav-item active relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer text-white"><span class="text-base">👥</span> Patients</a>
+    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">💬</span> WhatsApp Bot</a>
+    <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2 mt-4">System</div>
+    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">⚙️</span> Settings</a>
+  </nav>
+
+  <div class="px-3 py-4 border-t border-purple-50">
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition">
+      <div class="w-8 h-8 rounded-full bg-purple-700 grid place-items-center text-sm font-bold text-white flex-shrink-0">A</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-semibold text-purple-900 truncate">Admin</div>
+        <div class="text-[11px] text-purple-400">Super Admin</div>
+      </div>
+      <span class="text-purple-300 text-sm">↩</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="lg:ml-60 min-h-screen flex flex-col">
+
+  <!-- TOPBAR -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-purple-100 px-5 lg:px-8 h-[60px] flex items-center gap-4 shadow-sm">
+    <button onclick="toggleSidebar()" class="lg:hidden text-purple-500 hover:text-purple-700 text-xl p-1">☰</button>
+    <div>
+      <h1 class="font-serif font-bold text-purple-900 text-lg leading-tight">Patients</h1>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <span id="patient-count" class="hidden sm:block text-xs text-purple-400 font-medium"></span>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main class="flex-1 px-5 lg:px-8 py-7 relative overflow-hidden">
+
+    <div class="blob w-96 h-96 bg-purple-200/40 -top-20 -right-20 z-0"></div>
+    <div class="blob w-64 h-64 bg-green-400/15 bottom-10 left-10 z-0"></div>
+
+    <div class="relative z-10">
+
+      <!-- search + filter -->
+      <div class="fade-up mb-5 flex flex-wrap gap-3 items-center">
+        <div class="relative flex-1 min-w-[200px] max-w-sm">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-purple-300 text-sm">🔍</span>
+          <input type="text" id="search-input" placeholder="Search by name or phone…" oninput="renderTable()"
+            class="w-full bg-white border border-purple-200 text-purple-900 text-sm rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-purple-300">
+        </div>
+        <div class="relative">
+          <select id="filter-gender" onchange="renderTable()"
+            class="bg-white border border-purple-200 text-purple-900 text-sm rounded-xl px-3 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none">
+            <option value="">All genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+          <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none text-xs">▾</span>
+        </div>
+        <div class="relative">
+          <select id="filter-appts" onchange="renderTable()"
+            class="bg-white border border-purple-200 text-purple-900 text-sm rounded-xl px-3 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-purple-300 cursor-pointer appearance-none">
+            <option value="">All patients</option>
+            <option value="with">With appointments</option>
+            <option value="without">No appointments</option>
+          </select>
+          <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none text-xs">▾</span>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="fade-up delay-1 bg-white border border-purple-100 rounded-2xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-purple-50 flex items-center justify-between">
+          <div>
+            <h3 class="font-semibold text-purple-900 text-sm">Registered Patients</h3>
+            <p id="showing-label" class="text-purple-400 text-xs mt-0.5">Loading…</p>
+          </div>
+          <div class="text-xs text-purple-300 hidden sm:block">Click row to view details</div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-purple-50 bg-purple-50/50">
+                <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-6 py-3">Patient</th>
+                <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3 hidden sm:table-cell">Phone</th>
+                <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3 hidden lg:table-cell">Gender / Age</th>
+                <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Appointments</th>
+                <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Last Visit</th>
+                <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3 hidden xl:table-cell">Registered</th>
+              </tr>
+            </thead>
+            <tbody id="patients-tbody">
+              <tr><td colspan="6" class="px-6 py-10 text-center">
+                <div class="flex flex-col items-center gap-3">
+                  <div class="skeleton h-4 w-48 mx-auto"></div>
+                  <div class="skeleton h-4 w-36 mx-auto"></div>
+                  <div class="skeleton h-4 w-44 mx-auto"></div>
+                  <div class="skeleton h-4 w-40 mx-auto"></div>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- empty -->
+        <div id="empty-state" class="hidden px-6 py-16 text-center">
+          <div class="text-5xl mb-4">👥</div>
+          <div class="text-purple-500 text-base font-semibold">No patients found</div>
+          <div class="text-purple-300 text-sm mt-1">Patients register via the WhatsApp bot</div>
+        </div>
+
+        <!-- error -->
+        <div id="error-state" class="hidden px-6 py-12 text-center">
+          <div class="text-4xl mb-3">⚠️</div>
+          <div class="text-red-400 text-sm font-medium">Failed to load patients</div>
+          <button onclick="loadPatients()" class="mt-4 text-xs text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl transition font-medium">Retry</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ══ DETAIL DRAWER BACKDROP ══ -->
+<div id="drawer-backdrop" class="fixed inset-0 bg-purple-900/40 backdrop-blur-sm z-50 hidden" onclick="closeDrawer()"></div>
+
+<!-- ══ PATIENT DETAIL DRAWER ══ -->
+<div id="drawer" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl shadow-purple-200 z-50 translate-x-full flex flex-col border-l border-purple-100">
+  <div class="px-6 py-5 border-b border-purple-50 flex items-center justify-between flex-shrink-0">
+    <h2 class="font-serif font-bold text-purple-900 text-lg">Patient Details</h2>
+    <button onclick="closeDrawer()" class="w-8 h-8 rounded-xl bg-purple-50 hover:bg-purple-100 grid place-items-center text-purple-400 hover:text-purple-700 transition text-lg">×</button>
+  </div>
+  <div id="drawer-body" class="flex-1 overflow-y-auto px-6 py-5"></div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+
+const COLORS = [
+  ['bg-purple-100','text-purple-700'],
+  ['bg-green-100','text-green-700'],
+  ['bg-pink-100','text-pink-700'],
+  ['bg-amber-100','text-amber-700'],
+  ['bg-cyan-100','text-cyan-700'],
+  ['bg-indigo-100','text-indigo-700'],
+];
+function avatarCls(id) { return COLORS[id % COLORS.length]; }
+function initials(name) { return name.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+function fmtDate(str) {
+  if(!str) return '—';
+  return new Date(str).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+let allPatients = [];
+
+// ══ LOAD ══
+async function loadPatients() {
+  document.getElementById('empty-state').classList.add('hidden');
+  document.getElementById('error-state').classList.add('hidden');
+
+  try {
+    const res = await fetch(`${API}/admin/patients`);
+    if(!res.ok) throw new Error();
+    allPatients = await res.json();
+    document.getElementById('patient-count').textContent = `${allPatients.length} patient${allPatients.length !== 1 ? 's' : ''}`;
+    renderTable();
+  } catch(e) {
+    document.getElementById('patients-tbody').innerHTML = '';
+    document.getElementById('error-state').classList.remove('hidden');
+    document.getElementById('showing-label').textContent = 'Failed to load';
+  }
+}
+
+// ══ RENDER ══
+function renderTable() {
+  const search       = document.getElementById('search-input').value.toLowerCase();
+  const filterGender = document.getElementById('filter-gender').value;
+  const filterAppts  = document.getElementById('filter-appts').value;
+
+  const filtered = allPatients.filter(p => {
+    const matchSearch = p.name.toLowerCase().includes(search) || p.phone.includes(search);
+    const matchGender = !filterGender || p.gender === filterGender;
+    const matchAppts  = !filterAppts
+      || (filterAppts === 'with'    &&  p.total_appointments > 0)
+      || (filterAppts === 'without' && p.total_appointments === 0);
+    return matchSearch && matchGender && matchAppts;
+  });
+
+  const tbody = document.getElementById('patients-tbody');
+  document.getElementById('showing-label').textContent = `Showing ${filtered.length} of ${allPatients.length} patients`;
+
+  if(!filtered.length) {
+    tbody.innerHTML = '';
+    document.getElementById('empty-state').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('empty-state').classList.add('hidden');
+
+  tbody.innerHTML = filtered.map(p => {
+    const [bg, tc] = avatarCls(p.id);
+    return `
+    <tr class="patient-row border-b border-purple-50 last:border-0 cursor-pointer" onclick="openDrawer(${p.id})">
+      <td class="px-6 py-3.5">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full ${bg} ${tc} grid place-items-center text-xs font-bold flex-shrink-0">
+            ${initials(p.name)}
+          </div>
+          <div>
+            <div class="text-purple-900 text-sm font-medium">${p.name}</div>
+            <div class="text-purple-400 text-xs sm:hidden">${p.phone}</div>
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3.5 hidden sm:table-cell">
+        <div class="text-purple-700 text-sm">${p.phone}</div>
+        ${p.email ? `<div class="text-purple-400 text-xs truncate max-w-[160px]">${p.email}</div>` : ''}
+      </td>
+      <td class="px-4 py-3.5 hidden lg:table-cell">
+        <div class="text-purple-700 text-sm">${p.gender || '—'}</div>
+        <div class="text-purple-400 text-xs">${p.age ? 'Age ' + p.age : '—'}</div>
+      </td>
+      <td class="px-4 py-3.5 hidden md:table-cell">
+        <div class="flex items-center gap-2">
+          <span class="font-serif font-bold text-purple-900 text-lg leading-tight">${p.total_appointments}</span>
+          <span class="text-purple-300 text-xs">total</span>
+        </div>
+      </td>
+      <td class="px-4 py-3.5 hidden xl:table-cell">
+        <div class="text-purple-700 text-sm">${fmtDate(p.last_appointment)}</div>
+      </td>
+      <td class="px-4 py-3.5 hidden xl:table-cell">
+        <div class="text-purple-400 text-xs">${fmtDate(p.registered_at)}</div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ DETAIL DRAWER ══
+function openDrawer(patientId) {
+  const p = allPatients.find(x => x.id === patientId);
+  if(!p) return;
+  const [bg, tc] = avatarCls(p.id);
+
+  document.getElementById('drawer-body').innerHTML = `
+    <!-- avatar + name -->
+    <div class="flex flex-col items-center text-center mb-6 pb-6 border-b border-purple-50">
+      <div class="w-16 h-16 rounded-2xl ${bg} ${tc} grid place-items-center text-2xl font-bold font-serif mb-3">
+        ${initials(p.name)}
+      </div>
+      <div class="font-serif font-bold text-purple-900 text-xl">${p.name}</div>
+      <div class="text-purple-400 text-sm mt-0.5">${p.phone}</div>
+      ${p.email ? `<div class="text-purple-300 text-xs mt-0.5">${p.email}</div>` : ''}
+    </div>
+
+    <!-- details grid -->
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="bg-purple-50 rounded-xl px-4 py-3">
+        <div class="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Gender</div>
+        <div class="text-purple-800 text-sm font-medium">${p.gender || '—'}</div>
+      </div>
+      <div class="bg-purple-50 rounded-xl px-4 py-3">
+        <div class="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Age</div>
+        <div class="text-purple-800 text-sm font-medium">${p.age ? p.age + ' yrs' : '—'}</div>
+      </div>
+      <div class="bg-green-50 rounded-xl px-4 py-3">
+        <div class="text-[10px] font-semibold text-green-400 uppercase tracking-wider mb-1">Total Appts</div>
+        <div class="text-green-700 font-serif font-bold text-2xl leading-tight">${p.total_appointments}</div>
+      </div>
+      <div class="bg-purple-50 rounded-xl px-4 py-3">
+        <div class="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Last Visit</div>
+        <div class="text-purple-800 text-sm font-medium">${fmtDate(p.last_appointment)}</div>
+      </div>
+    </div>
+
+    <!-- registered -->
+    <div class="bg-purple-50/60 rounded-xl px-4 py-3 mb-4">
+      <div class="text-[10px] font-semibold text-purple-400 uppercase tracking-wider mb-1">Registered via WhatsApp</div>
+      <div class="text-purple-700 text-sm">${fmtDate(p.registered_at)}</div>
+    </div>
+
+    <!-- view appointments link -->
+    <a href="appointments.html"
+      class="flex items-center justify-center gap-2 w-full bg-purple-700 hover:bg-purple-800 text-white text-sm font-semibold py-3 rounded-xl transition shadow-lg shadow-purple-200 mt-2">
+      📅 View Appointments
+    </a>
+  `;
+
+  document.getElementById('drawer').classList.remove('translate-x-full');
+  document.getElementById('drawer-backdrop').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.add('translate-x-full');
+  document.getElementById('drawer-backdrop').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// ══ SIDEBAR ══
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  document.getElementById('overlay').classList.toggle('hidden');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.add('-translate-x-full');
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+// ══ INIT ══
+loadPatients();
+</script>
+</body>
+</html>

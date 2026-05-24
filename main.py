@@ -5,7 +5,8 @@ from database import engine, SessionLocal
 from models import Base
 from handlers import process_message
 from messaging import send_reply
-
+from fastapi.staticfiles import StaticFiles
+from admin_routes import router as admin_router
 
 # =========================
 # CREATE TABLES
@@ -14,7 +15,8 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
+app.include_router(admin_router)
+app.mount("/admin", StaticFiles(directory="admin", html=True), name="admin")
 # =========================
 # DATABASE SESSION
 # =========================

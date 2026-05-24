@@ -9,6 +9,7 @@ INSERT INTO doctors
     qualification,
     experience_years,
     consultation_fee,
+    phone,
     consultation_duration,
     is_active
 )
@@ -21,6 +22,7 @@ VALUES
     'MBBS, MD',
     10,
     1000,
+    9833851621,
     30,
     true
 ),
@@ -31,6 +33,7 @@ VALUES
     'BDS, MDS',
     7,
     700,
+    9920683549
     30,
     true
 ),
@@ -41,6 +44,7 @@ VALUES
     'MBBS',
     12,
     500,
+    986994195,
     20,
     true
 );
@@ -112,5 +116,4 @@ VALUES
     '20:00',
     true
 );
-
 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

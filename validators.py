@@ -28,3 +28,15 @@ def is_valid_email(email: str) -> bool:
             email.strip()
         )
     )
+
+# =========================
+# AGE VALIDATION
+# =========================
+def is_valid_age(age_str: str) -> bool:
+ 
+    if not age_str.strip().isdigit():
+        return False
+ 
+    age = int(age_str.strip())
+ 
+    return 1 <= age <= 120

@@ -23,9 +23,11 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     phone_number = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
-    email = Column(String, nullable=True)       # add this
-    gender = Column(String, nullable=True)      # add this
+    email = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
+    age = Column(Integer, nullable=True)                        # NEW
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 
 # =========================
 # CHATBOT SESSION STATE
@@ -51,10 +53,11 @@ class UserSession(Base):
         String,
         default="idle"
     )
+
     temp_name = Column(String, nullable=True)
-    # in UserSession model
     temp_email = Column(String, nullable=True)
     temp_gender = Column(String, nullable=True)
+    temp_age = Column(Integer, nullable=True)                   # NEW
 
     selected_specialization = Column(
         String,
@@ -70,6 +73,7 @@ class UserSession(Base):
         Integer,
         nullable=True
     )
+
     selected_date = Column(Date, nullable=True)
 
     created_at = Column(
@@ -101,6 +105,9 @@ class Doctor(Base):
         nullable=False,
         default=30
     )
+
+    phone = Column(String, nullable=True)                       # NEW
+    email = Column(String, nullable=True)                       # NEW
 
     is_active = Column(
         Boolean,

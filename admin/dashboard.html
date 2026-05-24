@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Clinic — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Outfit', 'sans-serif'],
+        serif: ['Fraunces', 'serif'],
+      },
+      colors: {
+        purple: {
+          50:  '#f4f2ff',
+          100: '#ebe8ff',
+          200: '#d4ccff',
+          300: '#b0a4f5',
+          400: '#8b7ce8',
+          500: '#6650d8',
+          600: '#5340c0',
+          700: '#3d2b96',
+          800: '#2d1f6e',
+          900: '#1a1040',
+        },
+        green: {
+          400: '#4fe898',
+          500: '#22d47a',
+          600: '#17a85f',
+        }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { background: #f8f7ff; font-family: 'Outfit', sans-serif; }
+
+  /* sidebar */
+  #sidebar { scrollbar-width: none; }
+  #sidebar::-webkit-scrollbar { display: none; }
+
+  .nav-item { transition: all 0.15s; }
+  .nav-item:hover { background: rgba(83,64,192,0.08); color: #3d2b96; }
+  .nav-item.active {
+    background: linear-gradient(135deg, #5340c0, #3d2b96);
+    color: white !important;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 20%; bottom: 20%;
+    width: 3px; background: #22d47a;
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* blob decorations */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+
+  /* stat card */
+  .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(83,64,192,0.12); }
+
+  /* table row */
+  .appt-row { transition: background 0.1s; }
+  .appt-row:hover { background: #f4f2ff; }
+
+  /* animations */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .fade-up   { animation: fadeUp 0.5s ease both; }
+  .delay-1   { animation-delay: 0.05s; }
+  .delay-2   { animation-delay: 0.10s; }
+  .delay-3   { animation-delay: 0.15s; }
+  .delay-4   { animation-delay: 0.20s; }
+  .delay-5   { animation-delay: 0.25s; }
+  .delay-6   { animation-delay: 0.30s; }
+
+  /* skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, #e8e4f8 25%, #f0ecff 50%, #e8e4f8 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* mobile overlay */
+  #overlay { transition: opacity 0.3s; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(83,64,192,0.2); border-radius: 99px; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- MOBILE OVERLAY -->
+<div id="overlay" class="fixed inset-0 bg-purple-900/40 z-40 hidden lg:hidden backdrop-blur-sm" onclick="closeSidebar()"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-60 bg-white border-r border-purple-100 flex flex-col z-50 -translate-x-full lg:translate-x-0 transition-transform duration-300 overflow-y-auto shadow-xl shadow-purple-100">
+
+  <!-- Logo -->
+  <div class="px-5 py-5 border-b border-purple-50">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-purple-700 grid place-items-center text-lg flex-shrink-0 shadow-lg shadow-purple-200">🏥</div>
+      <div>
+        <div class="font-serif font-bold text-purple-900 text-base leading-tight">City Clinic</div>
+        <div class="text-[10px] text-purple-400 uppercase tracking-widest font-medium">Admin Panel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 px-3 py-4 flex flex-col gap-0.5">
+    <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2">Main</div>
+
+    <a href="dashboard.html" class="nav-item active relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer text-white">
+      <span class="text-base">📊</span> Dashboard
+    </a>
+    <a href="appointments.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
+      <span class="text-base">📅</span> Appointments
+      <span id="appt-badge" class="ml-auto bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden"></span>
+    </a>
+    <a href="slots.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
+      <span class="text-base">🕐</span> Slots
+    </a>
+
+    <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2 mt-4">Manage</div>
+
+    <a href="doctors.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
+      <span class="text-base">👨‍⚕️</span> Doctors
+    </a>
+    <a href="patients.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
+      <span class="text-base">👥</span> Patients
+    </a>
+    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
+      <span class="text-base">💬</span> WhatsApp Bot
+    </a>
+
+    <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2 mt-4">System</div>
+
+    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
+      <span class="text-base">⚙️</span> Settings
+    </a>
+  </nav>
+
+  <!-- User -->
+  <div class="px-3 py-4 border-t border-purple-50">
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition">
+      <div class="w-8 h-8 rounded-full bg-purple-700 grid place-items-center text-sm font-bold text-white flex-shrink-0">A</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-semibold text-purple-900 truncate">Admin</div>
+        <div class="text-[11px] text-purple-400">Super Admin</div>
+      </div>
+      <span class="text-purple-300 text-sm">↩</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="lg:ml-60 min-h-screen flex flex-col">
+
+  <!-- TOPBAR -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-purple-100 px-5 lg:px-8 h-[60px] flex items-center gap-4 shadow-sm">
+    <button onclick="toggleSidebar()" class="lg:hidden text-purple-500 hover:text-purple-700 text-xl p-1">☰</button>
+    <div>
+      <h1 class="font-serif font-bold text-purple-900 text-lg leading-tight">Dashboard</h1>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      <div id="today-date" class="hidden sm:block text-xs text-purple-400 font-medium"></div>
+      <div class="relative">
+        <button class="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 grid place-items-center text-base hover:bg-purple-100 transition">🔔</button>
+        <div class="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full border-2 border-white"></div>
+      </div>
+      <a href="doctors.html" class="hidden sm:flex items-center gap-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-purple-200">
+        <span>+</span> Add Doctor
+      </a>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main class="flex-1 px-5 lg:px-8 py-7 relative overflow-hidden">
+
+    <!-- bg blobs -->
+    <div class="blob w-96 h-96 bg-purple-200/40 -top-20 -right-20 z-0"></div>
+    <div class="blob w-64 h-64 bg-green-400/15 bottom-10 left-10 z-0"></div>
+
+    <div class="relative z-10">
+
+      <!-- Greeting banner -->
+      <div class="mb-7 fade-up bg-gradient-to-r from-purple-700 to-purple-500 rounded-2xl px-7 py-6 flex flex-wrap items-center gap-4 shadow-xl shadow-purple-200 overflow-hidden relative">
+        <div class="absolute right-0 top-0 bottom-0 w-48 opacity-10" style="background: radial-gradient(circle at 80% 50%, white 0%, transparent 70%)"></div>
+        <div class="absolute -bottom-4 -right-4 w-32 h-32 rounded-full bg-white/5"></div>
+        <div>
+          <h2 id="greeting" class="font-serif font-bold text-white text-2xl leading-tight"></h2>
+          <p class="text-white/60 text-sm mt-1" id="today-date-banner"></p>
+        </div>
+        <div class="ml-auto flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-white/60 text-xs">Today's appointments</div>
+            <div id="banner-today" class="font-serif font-bold text-white text-3xl leading-tight">—</div>
+          </div>
+          <div class="w-14 h-14 rounded-2xl bg-white/15 grid place-items-center text-2xl flex-shrink-0">📅</div>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+
+        <div class="stat-card fade-up delay-1 bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start justify-between mb-4">
+            <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Active Doctors</div>
+            <div class="w-9 h-9 rounded-xl bg-purple-50 grid place-items-center text-lg">👨‍⚕️</div>
+          </div>
+          <div id="stat-doctors" class="skeleton h-9 w-16 mb-2"></div>
+          <div class="text-xs text-purple-300">On the roster</div>
+        </div>
+
+        <div class="stat-card fade-up delay-2 bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start justify-between mb-4">
+            <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Open Slots</div>
+            <div class="w-9 h-9 rounded-xl bg-green-400/15 grid place-items-center text-lg">🕐</div>
+          </div>
+          <div id="stat-slots" class="skeleton h-9 w-16 mb-2"></div>
+          <div class="text-xs text-purple-300">Available to book</div>
+        </div>
+
+        <div class="stat-card fade-up delay-3 bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start justify-between mb-4">
+            <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Total Patients</div>
+            <div class="w-9 h-9 rounded-xl bg-purple-50 grid place-items-center text-lg">👥</div>
+          </div>
+          <div id="stat-patients" class="skeleton h-9 w-16 mb-2"></div>
+          <div class="text-xs text-purple-300">Registered</div>
+        </div>
+
+        <div class="stat-card fade-up delay-4 bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start justify-between mb-4">
+            <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">All-time Bookings</div>
+            <div class="w-9 h-9 rounded-xl bg-green-400/15 grid place-items-center text-lg">📈</div>
+          </div>
+          <div id="stat-total" class="skeleton h-9 w-16 mb-2"></div>
+          <div class="text-xs text-purple-300">Total appointments</div>
+        </div>
+
+      </div>
+
+      <!-- TWO COLUMN -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+
+        <!-- TODAY'S APPOINTMENTS TABLE -->
+        <div class="xl:col-span-2 fade-up delay-5 bg-white border border-purple-100 rounded-2xl overflow-hidden shadow-sm">
+          <div class="px-6 py-4 border-b border-purple-50 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-purple-900 text-sm">Today's Appointments</h3>
+              <p class="text-purple-400 text-xs mt-0.5">All bookings for today</p>
+            </div>
+            <a href="appointments.html" class="text-purple-500 text-xs font-semibold hover:text-purple-700 transition bg-purple-50 px-3 py-1.5 rounded-lg">View all →</a>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-purple-50 bg-purple-50/50">
+                  <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-6 py-3">Patient</th>
+                  <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Doctor</th>
+                  <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3">Time</th>
+                  <th class="text-left text-[11px] font-semibold text-purple-400 uppercase tracking-wider px-4 py-3">Status</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody id="appointments-tbody">
+                <tr><td colspan="5" class="px-6 py-8 text-center text-purple-300 text-sm">Loading appointments…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="no-appointments" class="hidden px-6 py-12 text-center">
+            <div class="text-4xl mb-3">📭</div>
+            <div class="text-purple-400 text-sm font-medium">No appointments today</div>
+            <div class="text-purple-300 text-xs mt-1">Appointments booked via WhatsApp will appear here</div>
+          </div>
+        </div>
+
+        <!-- DOCTORS PANEL -->
+        <div class="fade-up delay-6 bg-white border border-purple-100 rounded-2xl overflow-hidden shadow-sm">
+          <div class="px-5 py-4 border-b border-purple-50 flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-purple-900 text-sm">Doctors on Duty</h3>
+              <p class="text-purple-400 text-xs mt-0.5">Active doctors</p>
+            </div>
+            <a href="doctors.html" class="text-purple-500 text-xs font-semibold hover:text-purple-700 transition bg-purple-50 px-3 py-1.5 rounded-lg">Manage →</a>
+          </div>
+          <div id="doctors-list" class="divide-y divide-purple-50">
+            <div class="px-5 py-4 text-center text-purple-300 text-sm">Loading…</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+
+// ── avatar colors ──
+const COLORS = [
+  ['bg-purple-100','text-purple-700'],
+  ['bg-green-100','text-green-700'],
+  ['bg-pink-100','text-pink-700'],
+  ['bg-amber-100','text-amber-700'],
+  ['bg-cyan-100','text-cyan-700'],
+  ['bg-indigo-100','text-indigo-700'],
+];
+function avatarCls(id) { return COLORS[id % COLORS.length]; }
+function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+// ── status pills ──
+function pill(status) {
+  const map = {
+    booked:    'bg-green-50 text-green-700 border border-green-200',
+    cancelled: 'bg-red-50 text-red-600 border border-red-200',
+    pending:   'bg-amber-50 text-amber-700 border border-amber-200',
+  };
+  const cls = map[status] || 'bg-purple-50 text-purple-500';
+  const label = status.charAt(0).toUpperCase() + status.slice(1);
+  return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cls}">
+    <span class="w-1.5 h-1.5 rounded-full bg-current"></span>${label}
+  </span>`;
+}
+
+// ── greeting ──
+function setGreeting() {
+  const now  = new Date();
+  const hour = now.getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = `${greet}, Admin 👋`;
+  const dateStr = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('today-date').textContent = dateStr;
+  document.getElementById('today-date-banner').textContent = dateStr;
+}
+
+// ── animate count ──
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('skeleton');
+  el.className = 'font-serif font-bold text-3xl text-purple-900';
+  let start = 0;
+  const step = ts => {
+    if(!start) start = ts;
+    const p = Math.min((ts - start) / 800, 1);
+    const e = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(e * target).toLocaleString();
+    if(p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// ── load stats ──
+async function loadStats() {
+  try {
+    const res  = await fetch(`${API}/admin/stats`);
+    const d    = await res.json();
+    animateCount('stat-doctors',  d.total_doctors);
+    animateCount('stat-slots',    d.open_slots);
+    animateCount('stat-patients', d.total_patients);
+    animateCount('stat-total',    d.total_appointments);
+    document.getElementById('banner-today').textContent = d.appointments_today;
+    if(d.appointments_today > 0) {
+      const b = document.getElementById('appt-badge');
+      b.textContent = d.appointments_today;
+      b.classList.remove('hidden');
+    }
+  } catch(e) {
+    ['stat-doctors','stat-slots','stat-patients','stat-total'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) { el.classList.remove('skeleton'); el.className = 'text-2xl font-serif font-bold text-purple-300'; el.textContent = '—'; }
+    });
+  }
+}
+
+// ── load today's appointments ──
+async function loadTodayAppointments() {
+  const tbody = document.getElementById('appointments-tbody');
+  try {
+    const res  = await fetch(`${API}/admin/appointments/today`);
+    const data = await res.json();
+
+    if(!data.length) {
+      tbody.innerHTML = '';
+      document.getElementById('no-appointments').classList.remove('hidden');
+      return;
+    }
+
+    tbody.innerHTML = data.map(a => {
+      const [bg, tc] = avatarCls(a.id);
+      return `
+      <tr class="appt-row border-b border-purple-50 last:border-0">
+        <td class="px-6 py-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full ${bg} ${tc} grid place-items-center text-xs font-bold flex-shrink-0">
+              ${initials(a.patient_name)}
+            </div>
+            <div>
+              <div class="text-purple-900 text-sm font-medium">${a.patient_name}</div>
+              <div class="text-purple-400 text-xs">${a.patient_phone}</div>
+            </div>
+          </div>
+        </td>
+        <td class="px-4 py-3.5 hidden md:table-cell">
+          <div class="text-purple-800 text-sm">${a.doctor_name}</div>
+          <div class="text-purple-400 text-xs">${a.specialization}</div>
+        </td>
+        <td class="px-4 py-3.5">
+          <div class="text-purple-800 text-sm font-medium">${a.time}</div>
+        </td>
+        <td class="px-4 py-3.5">${pill(a.status)}</td>
+        <td class="px-4 py-3.5">
+          ${a.status === 'booked' ? `
+          <button onclick="cancelAppt(${a.id}, this)"
+            class="text-[11px] text-red-500 hover:text-red-700 border border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition font-medium">
+            Cancel
+          </button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-red-400 text-sm">⚠️ Failed to load. Is the server running?</td></tr>`;
+  }
+}
+
+// ── cancel appointment ──
+async function cancelAppt(id, btn) {
+  if(!confirm('Cancel this appointment?')) return;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const res = await fetch(`${API}/admin/appointments/${id}/cancel`, { method:'PUT' });
+    if(res.ok) { loadTodayAppointments(); loadStats(); }
+    else { const e = await res.json(); alert(e.detail || 'Failed'); btn.disabled=false; btn.textContent='Cancel'; }
+  } catch(e) { alert('Network error'); btn.disabled=false; btn.textContent='Cancel'; }
+}
+
+// ── load doctors ──
+async function loadDoctors() {
+  const list = document.getElementById('doctors-list');
+  try {
+    const res  = await fetch(`${API}/admin/doctors`);
+    const data = await res.json();
+    const active = data.filter(d => d.is_active);
+
+    if(!active.length) {
+      list.innerHTML = `<div class="px-5 py-8 text-center text-purple-300 text-sm">No active doctors</div>`;
+      return;
+    }
+
+    list.innerHTML = active.map(d => {
+      const [bg, tc] = avatarCls(d.id);
+      return `
+      <div class="flex items-center gap-3 px-5 py-3.5 hover:bg-purple-50/50 transition cursor-default">
+        <div class="w-9 h-9 rounded-xl ${bg} ${tc} grid place-items-center text-sm font-bold flex-shrink-0">
+          ${initials(d.name)}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-purple-900 text-sm font-medium truncate">${d.name}</div>
+          <div class="text-purple-400 text-xs truncate">${d.specialization}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-purple-700 font-serif font-bold text-lg leading-tight">${d.available_slots}</div>
+          <div class="text-purple-300 text-[10px]">slots left</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = `<div class="px-5 py-4 text-red-400 text-sm text-center">Failed to load</div>`;
+  }
+}
+
+// ── sidebar ──
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  document.getElementById('overlay').classList.toggle('hidden');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.add('-translate-x-full');
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+// ── init ──
+setGreeting();
+loadStats();
+loadTodayAppointments();
+loadDoctors();
+</script>
+</body>
+</html>
