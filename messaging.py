@@ -5,16 +5,15 @@ from config import client, FROM_NUMBER, TEST_MODE
 # DISPLAY MENU
 # =========================
 def display_menu():
-
     return (
         "👋 Welcome to City Clinic!\n\n"
         "Please choose an option:\n\n"
         "1️⃣ Book Appointment\n"
         "2️⃣ Cancel Appointment\n"
-        "3️⃣ Clinic Hours\n"
-        "4️⃣ Location"
+        "3️⃣ My Appointments\n"
+        "4️⃣ Clinic Hours\n"
+        "5️⃣ Location"
     )
-
 
 # =========================
 # SEND WHATSAPP MESSAGE

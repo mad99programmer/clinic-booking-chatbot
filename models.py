@@ -251,3 +251,28 @@ class Appointment(Base):
         DateTime(timezone=True),
         server_default=func.now()
     )
+
+
+# =========================
+# DOCTOR LEAVE
+# =========================
+class DoctorLeave(Base):
+    __tablename__ = "doctor_leaves"
+ 
+    id = Column(Integer, primary_key=True, index=True)
+ 
+    doctor_id = Column(
+        Integer,
+        ForeignKey("doctors.id"),
+        nullable=False
+    )
+ 
+    leave_date = Column(Date, nullable=False)
+ 
+    reason = Column(String, nullable=True)
+ 
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+ 

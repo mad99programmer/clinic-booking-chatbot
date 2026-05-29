@@ -1,5 +1,5 @@
 from ai_receptionist import suggest_specialization
-from models import User, UserSession, Doctor, Appointment
+from models import User, UserSession, Doctor, Appointment, DoctorSlot
 from crud import (
     get_specializations,
     get_doctors_by_specialization,
@@ -8,6 +8,7 @@ from crud import (
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
 from messaging import display_menu
+from datetime import date
 
 
 MENU_COMMANDS = [
@@ -19,8 +20,86 @@ MENU_COMMANDS = [
     "1",
     "2",
     "3",
-    "4"
+    "4",
+    "5"
 ]
+
+
+# =========================
+# DISPLAY MENU
+# =========================
+def display_menu():
+    return (
+        "👋 Welcome to City Clinic!\n\n"
+        "Please choose an option:\n\n"
+        "1️⃣ Book Appointment\n"
+        "2️⃣ Cancel Appointment\n"
+        "3️⃣ My Appointments\n"
+        "4️⃣ Clinic Hours\n"
+        "5️⃣ Location"
+    )
+
+
+# =========================
+# GET UPCOMING APPOINTMENTS
+# =========================
+def get_upcoming_appointments(user_number, db):
+
+    user = db.query(User).filter(
+        User.phone_number == user_number
+    ).first()
+
+    if not user:
+        return []
+
+    today = date.today()
+
+    appointments = db.query(Appointment).filter(
+        Appointment.user_id == user.id,
+        Appointment.status == "booked",
+        Appointment.appointment_date >= today
+    ).order_by(
+        Appointment.appointment_date
+    ).all()
+
+    result = []
+
+    for appt in appointments:
+
+        doctor = db.query(Doctor).filter(
+            Doctor.id == appt.doctor_id
+        ).first()
+
+        slot = db.query(DoctorSlot).filter(
+            DoctorSlot.id == appt.slot_id
+        ).first()
+
+        result.append({
+            "id":           appt.id,
+            "doctor_name":  doctor.name if doctor else "Unknown",
+            "date":         appt.appointment_date.strftime("%d %B %Y"),
+            "time":         slot.start_time.strftime("%I:%M %p") if slot else "",
+            "slot_id":      appt.slot_id,
+        })
+
+    return result
+
+
+# =========================
+# FORMAT APPOINTMENTS TEXT
+# =========================
+def format_appointments(appointments):
+
+    text = ""
+
+    for index, appt in enumerate(appointments, start=1):
+
+        text += (
+            f"{index}️⃣ {appt['doctor_name']}\n"
+            f"   📅 {appt['date']} at {appt['time']}\n\n"
+        )
+
+    return text
 
 
 # =========================
@@ -28,7 +107,12 @@ MENU_COMMANDS = [
 # =========================
 def process_message(user_number, incoming_msg, db):
 
-    normalized_msg = incoming_msg.lower()
+    normalized_msg = incoming_msg.lower().strip()
+
+    reply = (
+        "Sorry, I didn't understand that.\n\n"
+        "Reply *hi* to see the menu."
+    )
 
     # =========================
     # FETCH SESSION
@@ -40,20 +124,21 @@ def process_message(user_number, incoming_msg, db):
     # =========================
     # GLOBAL MENU RESET
     # =========================
-    if normalized_msg in ["hi","hello","hey","menu","home","reset"]:
+    if normalized_msg in [
+        "hi", "hello", "hey", "menu", "home", "reset"
+    ]:
 
         if session:
 
-            session.current_step = "idle"
-
-            session.temp_name = None
-            session.temp_email = None
-            session.temp_gender = None
-            session.temp_age    = None
+            session.current_step          = "idle"
+            session.temp_name             = None
+            session.temp_email            = None
+            session.temp_gender           = None
+            session.temp_age              = None
             session.selected_specialization = None
-            session.selected_doctor_id = None
-            session.selected_slot_id = None
-            session.selected_date = None
+            session.selected_doctor_id    = None
+            session.selected_slot_id      = None
+            session.selected_date         = None
 
             db.commit()
 
@@ -82,9 +167,7 @@ def process_message(user_number, incoming_msg, db):
         else:
 
             session.temp_name = incoming_msg.strip()
-
             session.current_step = "collecting_email"
-
             db.commit()
 
             reply = (
@@ -113,9 +196,7 @@ def process_message(user_number, incoming_msg, db):
         else:
 
             session.temp_email = incoming_msg.strip().lower()
-
             session.current_step = "collecting_gender"
-
             db.commit()
 
             reply = (
@@ -148,9 +229,7 @@ def process_message(user_number, incoming_msg, db):
         else:
 
             session.temp_gender = gender_map[normalized_msg]
-
             session.current_step = "collecting_age"
-
             db.commit()
 
             reply = (
@@ -162,28 +241,26 @@ def process_message(user_number, incoming_msg, db):
     # HANDLE AGE COLLECTION
     # =========================
     elif session and session.current_step == "collecting_age":
- 
+
         if normalized_msg in MENU_COMMANDS:
- 
+
             reply = (
                 "🔢 Please enter your age to continue."
             )
- 
+
         elif not is_valid_age(incoming_msg):
- 
+
             reply = (
                 "⚠️ Please enter a valid age.\n\n"
                 "Example: 25"
             )
- 
+
         else:
- 
+
             session.temp_age = int(incoming_msg.strip())
- 
             session.current_step = "confirming_details"
- 
             db.commit()
- 
+
             reply = (
                 f"Please confirm your details:\n\n"
                 f"👤 Name: {session.temp_name}\n"
@@ -193,13 +270,12 @@ def process_message(user_number, incoming_msg, db):
                 f"1️⃣ Yes, confirm\n"
                 f"2️⃣ No, start over"
             )
- 
+
     # =========================
     # HANDLE DETAILS CONFIRMATION
     # =========================
     elif session and session.current_step == "confirming_details":
 
-        # YES
         if normalized_msg == "1":
 
             new_user = User(
@@ -212,31 +288,26 @@ def process_message(user_number, incoming_msg, db):
 
             db.add(new_user)
 
-            session.temp_name = None
-            session.temp_email = None
-            session.temp_gender = None
-            session.temp_age    = None
-            session.current_step = "selecting_specialization"
+            session.temp_name             = None
+            session.temp_email            = None
+            session.temp_gender           = None
+            session.temp_age              = None
+            session.current_step          = "selecting_specialization"
 
             db.commit()
 
             specializations = get_specializations(db)
-
             specialization_text = ""
 
             for index, specialization in enumerate(
-                specializations,
-                start=1
+                specializations, start=1
             ):
-
-                specialization_text += (
-                    f"{index}️⃣ {specialization}\n"
-                )
+                specialization_text += f"{index}️⃣ {specialization}\n"
 
             specialization_text += (
                 f"{len(specializations)+1}️⃣ "
                 f"Consult our AI Medical Receptionist\n"
-            )            
+            )
 
             reply = (
                 f"✅ Registration completed!\n\n"
@@ -245,14 +316,13 @@ def process_message(user_number, incoming_msg, db):
                 f"{specialization_text}"
             )
 
-        # NO
         elif normalized_msg == "2":
 
-            session.temp_name = None
-            session.temp_email = None
-            session.temp_gender = None
-            session.temp_age    = None
-            session.current_step = "collecting_name"
+            session.temp_name             = None
+            session.temp_email            = None
+            session.temp_gender           = None
+            session.temp_age              = None
+            session.current_step          = "collecting_name"
 
             db.commit()
 
@@ -291,26 +361,19 @@ def process_message(user_number, incoming_msg, db):
                 or selected_index > len(specializations)
             ):
 
-                reply = (
-                    "Invalid specialization selection."
-                )
+                reply = "Invalid specialization selection."
 
             else:
-                
+
                 # AI receptionist selected
                 if selected_index == len(specializations):
 
-                    session.current_step = (
-                        "ai_symptom_collection"
-                    )
-
+                    session.current_step = "ai_symptom_collection"
                     db.commit()
 
-                    reply = (
-                        "🤖 Please describe your symptoms."
-                    )
+                    reply = "🤖 Please describe your symptoms."
 
-                # Manual specialization selection
+                # Manual specialization selected
                 else:
 
                     selected_specialization = (
@@ -320,42 +383,35 @@ def process_message(user_number, incoming_msg, db):
                     session.selected_specialization = (
                         selected_specialization
                     )
-
-                    session.current_step = (
-                        "selecting_doctor"
-                    )
-
+                    session.current_step = "selecting_doctor"
                     db.commit()
 
                     doctors = get_doctors_by_specialization(
-                        db,
-                        selected_specialization
+                        db, selected_specialization
                     )
 
                     doctor_text = ""
 
                     for index, doctor in enumerate(
-                        doctors,
-                        start=1
+                        doctors, start=1
                     ):
-
                         doctor_text += (
-                            f"{index}️⃣ "
-                            f"{doctor.name}\n"
+                            f"{index}️⃣ {doctor.name}\n"
                         )
 
                     reply = (
                         f"Available doctors for "
                         f"{selected_specialization}:\n\n"
                         f"{doctor_text}"
-                    )                
+                    )
 
     # =========================
     # HANDLE AI SYMPTOM COLLECTION
     # =========================
-    elif ( session and session.current_step == "ai_symptom_collection" ):
-
-        
+    elif (
+        session and
+        session.current_step == "ai_symptom_collection"
+    ):
 
         specializations = get_specializations(db)
 
@@ -365,41 +421,25 @@ def process_message(user_number, incoming_msg, db):
         )
 
         suggested_specialization = (
-            ai_result[
-                "assigned_specialization"
-            ]
+            ai_result["assigned_specialization"]
         )
 
-        # Return back to specialization menu
-        session.current_step = (
-            "selecting_specialization"
-        )
-
+        session.current_step = "selecting_specialization"
         db.commit()
 
         specialization_text = ""
 
         for index, specialization in enumerate(
-            specializations,
-            start=1
+            specializations, start=1
         ):
 
-            if (
-                specialization
-                ==
-                suggested_specialization
-            ):
-
+            if specialization == suggested_specialization:
                 specialization_text += (
-                    f"{index}️⃣ "
-                    f"{specialization} ⭐ Recommended\n"
+                    f"{index}️⃣ {specialization} ⭐ Recommended\n"
                 )
-
             else:
-
                 specialization_text += (
-                    f"{index}️⃣ "
-                    f"{specialization}\n"
+                    f"{index}️⃣ {specialization}\n"
                 )
 
         specialization_text += (
@@ -421,15 +461,12 @@ def process_message(user_number, incoming_msg, db):
     elif session and session.current_step == "selecting_doctor":
 
         doctors = get_doctors_by_specialization(
-            db,
-            session.selected_specialization
+            db, session.selected_specialization
         )
 
         if not normalized_msg.isdigit():
 
-            reply = (
-                "Please enter a valid doctor number."
-            )
+            reply = "Please enter a valid doctor number."
 
         else:
 
@@ -440,29 +477,44 @@ def process_message(user_number, incoming_msg, db):
                 or selected_index >= len(doctors)
             ):
 
-                reply = (
-                    "Invalid doctor selection."
-                )
+                reply = "Invalid doctor selection."
 
             else:
 
                 selected_doctor = doctors[selected_index]
-
                 session.selected_doctor_id = selected_doctor.id
-
                 session.current_step = "selecting_date"
-
                 db.commit()
 
                 available_dates = get_available_dates(
-                    db,
-                    selected_doctor.id
+                    db, selected_doctor.id
                 )
 
                 if not available_dates:
 
+                    session.current_step = "selecting_specialization"
+                    session.selected_doctor_id = None
+                    db.commit()
+
+                    specializations = get_specializations(db)
+                    specialization_text = ""
+
+                    for index, specialization in enumerate(
+                        specializations, start=1
+                    ):
+                        specialization_text += (
+                            f"{index}️⃣ {specialization}\n"
+                        )
+
+                    specialization_text += (
+                        f"{len(specializations)+1}️⃣ "
+                        f"Consult our AI Medical Receptionist\n"
+                    )
+
                     reply = (
-                        "No slots available currently."
+                        "😔 No slots available for this doctor.\n\n"
+                        "Please choose another specialization:\n\n"
+                        f"{specialization_text}"
                     )
 
                 else:
@@ -470,18 +522,12 @@ def process_message(user_number, incoming_msg, db):
                     date_text = ""
 
                     for index, slot_date in enumerate(
-                        available_dates,
-                        start=1
+                        available_dates, start=1
                     ):
-
-                        formatted_date = (
-                            slot_date.strftime("%d %B %Y")
+                        formatted_date = slot_date.strftime(
+                            "%d %B %Y"
                         )
-
-                        date_text += (
-                            f"{index}️⃣ "
-                            f"{formatted_date}\n"
-                        )
+                        date_text += f"{index}️⃣ {formatted_date}\n"
 
                     reply = (
                         f"Available dates for "
@@ -495,15 +541,12 @@ def process_message(user_number, incoming_msg, db):
     elif session and session.current_step == "selecting_date":
 
         available_dates = get_available_dates(
-            db,
-            session.selected_doctor_id
+            db, session.selected_doctor_id
         )
 
         if not normalized_msg.isdigit():
 
-            reply = (
-                "Please enter a valid date number."
-            )
+            reply = "Please enter a valid date number."
 
         else:
 
@@ -514,47 +557,31 @@ def process_message(user_number, incoming_msg, db):
                 or selected_index >= len(available_dates)
             ):
 
-                reply = (
-                    "Invalid date selection."
-                )
+                reply = "Invalid date selection."
 
             else:
 
                 selected_date = available_dates[selected_index]
-
                 session.selected_date = selected_date
-
                 session.current_step = "selecting_slot"
-
                 db.commit()
 
                 slots = get_available_slots(
-                    db,
-                    session.selected_doctor_id,
-                    selected_date
+                    db, session.selected_doctor_id, selected_date
                 )
 
                 slot_text = ""
 
                 for index, slot in enumerate(slots, start=1):
 
-                    start_time = slot.start_time.strftime(
-                        "%I:%M %p"
-                    )
-
-                    end_time = slot.end_time.strftime(
-                        "%I:%M %p"
-                    )
+                    start_time = slot.start_time.strftime("%I:%M %p")
+                    end_time   = slot.end_time.strftime("%I:%M %p")
 
                     slot_text += (
-                        f"{index}️⃣ "
-                        f"{start_time} - {end_time}\n"
+                        f"{index}️⃣ {start_time} - {end_time}\n"
                     )
 
-                reply = (
-                    f"Available slots:\n\n"
-                    f"{slot_text}"
-                )
+                reply = f"Available slots:\n\n{slot_text}"
 
     # =========================
     # HANDLE SLOT SELECTION
@@ -569,9 +596,7 @@ def process_message(user_number, incoming_msg, db):
 
         if not normalized_msg.isdigit():
 
-            reply = (
-                "Please enter a valid slot number."
-            )
+            reply = "Please enter a valid slot number."
 
         else:
 
@@ -582,33 +607,27 @@ def process_message(user_number, incoming_msg, db):
                 or selected_index >= len(slots)
             ):
 
-                reply = (
-                    "Invalid slot selection."
-                )
+                reply = "Invalid slot selection."
 
             else:
 
                 selected_slot = slots[selected_index]
 
-                # prevent double booking
                 if selected_slot.status != "available":
 
                     reply = (
-                        "Sorry, this slot "
-                        "was just booked."
+                        "Sorry, this slot was just booked.\n\n"
+                        "Please go back and choose another slot."
                     )
 
                 else:
 
-                    # mark slot booked
                     selected_slot.status = "booked"
 
-                    # fetch user
                     user = db.query(User).filter(
                         User.phone_number == user_number
                     ).first()
 
-                    # create appointment
                     appointment = Appointment(
                         user_id=user.id,
                         doctor_id=session.selected_doctor_id,
@@ -619,30 +638,22 @@ def process_message(user_number, incoming_msg, db):
 
                     db.add(appointment)
 
-                    # reset session
-                    session.current_step = "idle"
-
+                    session.current_step            = "idle"
                     session.selected_specialization = None
-                    session.selected_doctor_id = None
-                    session.selected_date = None
+                    session.selected_doctor_id      = None
+                    session.selected_date           = None
 
                     db.commit()
 
-                    # fetch doctor
                     doctor = db.query(Doctor).filter(
                         Doctor.id == appointment.doctor_id
                     ).first()
 
-                    formatted_date = (
-                        selected_slot.slot_date.strftime(
-                            "%d %B %Y"
-                        )
+                    formatted_date = selected_slot.slot_date.strftime(
+                        "%d %B %Y"
                     )
-
-                    start_time = (
-                        selected_slot.start_time.strftime(
-                            "%I:%M %p"
-                        )
+                    start_time = selected_slot.start_time.strftime(
+                        "%I:%M %p"
                     )
 
                     reply = (
@@ -654,14 +665,118 @@ def process_message(user_number, incoming_msg, db):
                     )
 
     # =========================
+    # HANDLE CANCEL — SELECT APPOINTMENT
+    # =========================
+    elif (
+        session and
+        session.current_step == "selecting_cancel"
+    ):
+
+        appointments = get_upcoming_appointments(
+            user_number, db
+        )
+
+        if not normalized_msg.isdigit():
+
+            reply = "Please enter a valid appointment number."
+
+        else:
+
+            selected_index = int(normalized_msg) - 1
+
+            if (
+                selected_index < 0
+                or selected_index >= len(appointments)
+            ):
+
+                reply = "Invalid selection. Please try again."
+
+            else:
+
+                selected_appt = appointments[selected_index]
+
+                # store appointment id in slot_id field temporarily
+                session.selected_slot_id = selected_appt["id"]
+                session.current_step     = "confirming_cancel"
+                db.commit()
+
+                reply = (
+                    f"Are you sure you want to cancel?\n\n"
+                    f"👨‍⚕️ {selected_appt['doctor_name']}\n"
+                    f"📅 {selected_appt['date']} "
+                    f"at {selected_appt['time']}\n\n"
+                    f"1️⃣ Yes, cancel it\n"
+                    f"2️⃣ No, keep it"
+                )
+
+    # =========================
+    # HANDLE CANCEL — CONFIRM
+    # =========================
+    elif (
+        session and
+        session.current_step == "confirming_cancel"
+    ):
+
+        if normalized_msg == "1":
+
+            appointment = db.query(Appointment).filter(
+                Appointment.id == session.selected_slot_id
+            ).first()
+
+            if not appointment:
+
+                reply = (
+                    "⚠️ Appointment not found.\n\n"
+                    "Reply *hi* to go back to the menu."
+                )
+
+            else:
+
+                # free up the slot
+                slot = db.query(DoctorSlot).filter(
+                    DoctorSlot.id == appointment.slot_id
+                ).first()
+
+                if slot:
+                    slot.status = "available"
+
+                appointment.status = "cancelled"
+
+                session.current_step     = "idle"
+                session.selected_slot_id = None
+
+                db.commit()
+
+                reply = (
+                    "✅ Appointment cancelled successfully.\n\n"
+                    "Your slot has been freed up.\n\n"
+                    "Reply *hi* to go back to the menu."
+                )
+
+        elif normalized_msg == "2":
+
+            session.current_step     = "idle"
+            session.selected_slot_id = None
+            db.commit()
+
+            reply = (
+                "👍 No problem! Your appointment is kept.\n\n"
+                "Reply *hi* to go back to the menu."
+            )
+
+        else:
+
+            reply = (
+                "Please reply with:\n\n"
+                "1️⃣ Yes, cancel it\n"
+                "2️⃣ No, keep it"
+            )
+
+    # =========================
     # MAIN MENU
     # =========================
     elif normalized_msg in [
-        "hi",
-        "hello",
-        "hey",
-        "menu",
-        "hie"
+        "hi", "hello", "hey", "menu", "hie"
     ]:
 
         reply = display_menu()
@@ -683,16 +798,12 @@ def process_message(user_number, incoming_msg, db):
             )
 
             db.add(session)
-
             db.commit()
-
             db.refresh(session)
 
-        # NEW USER
         if not user:
 
             session.current_step = "collecting_name"
-
             db.commit()
 
             reply = (
@@ -701,30 +812,24 @@ def process_message(user_number, incoming_msg, db):
                 "Please enter your full name."
             )
 
-        # EXISTING USER
         else:
 
             specializations = get_specializations(db)
-
             session.current_step = "selecting_specialization"
-
             db.commit()
 
             specialization_text = ""
 
             for index, specialization in enumerate(
-                specializations,
-                start=1
+                specializations, start=1
             ):
-
-                specialization_text += (
-                    f"{index}️⃣ {specialization}\n"
-                )
+                specialization_text += f"{index}️⃣ {specialization}\n"
 
             specialization_text += (
                 f"{len(specializations)+1}️⃣ "
                 f"Consult our AI Medical Receptionist\n"
             )
+
             reply = (
                 f"Welcome back {user.name} 👋\n\n"
                 f"Choose specialization:\n\n"
@@ -736,15 +841,96 @@ def process_message(user_number, incoming_msg, db):
     # =========================
     elif normalized_msg == "2":
 
-        reply = (
-            "Please share your appointment ID "
-            "or registered phone number to cancel."
-        )
+        user = db.query(User).filter(
+            User.phone_number == user_number
+        ).first()
+
+        if not user:
+
+            reply = (
+                "⚠️ You are not registered yet.\n\n"
+                "Reply *1* to book your first appointment."
+            )
+
+        else:
+
+            appointments = get_upcoming_appointments(
+                user_number, db
+            )
+
+            if not appointments:
+
+                reply = (
+                    "📭 You have no upcoming appointments.\n\n"
+                    "Reply *1* to book an appointment."
+                )
+
+            else:
+
+                if not session:
+                    session = UserSession(
+                        phone_number=user_number,
+                        current_step="idle"
+                    )
+                    db.add(session)
+                    db.commit()
+                    db.refresh(session)
+
+                session.current_step = "selecting_cancel"
+                db.commit()
+
+                appt_text = format_appointments(appointments)
+
+                reply = (
+                    f"Your upcoming appointments:\n\n"
+                    f"{appt_text}"
+                    f"Which one would you like to cancel?\n"
+                    f"Reply with the number."
+                )
+
+    # =========================
+    # MY APPOINTMENTS
+    # =========================
+    elif normalized_msg == "3":
+
+        user = db.query(User).filter(
+            User.phone_number == user_number
+        ).first()
+
+        if not user:
+
+            reply = (
+                "⚠️ You are not registered yet.\n\n"
+                "Reply *1* to book your first appointment."
+            )
+
+        else:
+
+            appointments = get_upcoming_appointments(
+                user_number, db
+            )
+
+            if not appointments:
+
+                reply = (
+                    "📭 You have no upcoming appointments.\n\n"
+                    "Reply *1* to book an appointment."
+                )
+
+            else:
+
+                appt_text = format_appointments(appointments)
+
+                reply = (
+                    f"📋 Your upcoming appointments:\n\n"
+                    f"{appt_text}"
+                    f"Reply *hi* to go back to the menu."
+                )
 
     # =========================
     # CLINIC HOURS
     # =========================
-    elif normalized_msg == "3":
+    elif normalized_msg == "4":
 
         reply = (
             "🕐 We're open Mon–Sat, "
@@ -755,23 +941,13 @@ def process_message(user_number, incoming_msg, db):
     # =========================
     # LOCATION
     # =========================
-    elif normalized_msg == "4":
+    elif normalized_msg == "5":
 
         reply = (
             "📍 123 Health Street, "
             "Near Central Park.\n"
             "Google Maps: "
             "https://maps.google.com/?q=..."
-        )
-
-    # =========================
-    # UNKNOWN MESSAGE
-    # =========================
-    else:
-
-        reply = (
-            "Sorry, I didn't understand that.\n\n"
-            "Reply *hi* to see the menu."
         )
 
     return reply

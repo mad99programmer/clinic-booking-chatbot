@@ -7,6 +7,7 @@ from database import SessionLocal
 from models import (
     Doctor,
     DoctorAvailability,
+    DoctorLeave,
     DoctorSlot
 )
 
@@ -24,34 +25,46 @@ def generate_slots_for_next_7_days():
 
     today = date.today()
 
-    # next 7 days
     for day_offset in range(7):
 
-        current_date = today + timedelta(days=day_offset)
-
+        current_date    = today + timedelta(days=day_offset)
         current_weekday = current_date.strftime("%A")
 
         # fetch matching availability
         availabilities = db.query(DoctorAvailability).filter(
-            DoctorAvailability.weekday == current_weekday,
+            DoctorAvailability.weekday   == current_weekday,
             DoctorAvailability.is_active == True
         ).all()
 
-        # process each doctor schedule
         for availability in availabilities:
 
             doctor = db.query(Doctor).filter(
-                Doctor.id == availability.doctor_id
+                Doctor.id       == availability.doctor_id,
+                Doctor.is_active == True          # skip inactive doctors
             ).first()
+
+            if not doctor:
+                continue
+
+            # ── skip if doctor is on leave ──
+            on_leave = db.query(DoctorLeave).filter(
+                DoctorLeave.doctor_id  == doctor.id,
+                DoctorLeave.leave_date == current_date
+            ).first()
+
+            if on_leave:
+                print(
+                    f"⏭️  Skipping {doctor.name} on "
+                    f"{current_date} — on leave"
+                )
+                continue
 
             duration = doctor.consultation_duration
 
-            # combine date + time
             start_datetime = datetime.combine(
                 current_date,
                 availability.start_time
             )
-
             end_datetime = datetime.combine(
                 current_date,
                 availability.end_time
@@ -59,27 +72,21 @@ def generate_slots_for_next_7_days():
 
             current_slot = start_datetime
 
-            # generate slots
             while current_slot < end_datetime:
 
-                next_slot = current_slot + timedelta(
-                    minutes=duration
-                )
+                next_slot = current_slot + timedelta(minutes=duration)
 
-                # prevent overflow
                 if next_slot > end_datetime:
                     break
 
-                # avoid duplicate slots
-                existing_slot = db.query(DoctorSlot).filter(
-                    DoctorSlot.doctor_id == doctor.id,
-                    DoctorSlot.slot_date == current_date,
+                # avoid duplicates
+                existing = db.query(DoctorSlot).filter(
+                    DoctorSlot.doctor_id  == doctor.id,
+                    DoctorSlot.slot_date  == current_date,
                     DoctorSlot.start_time == current_slot.time()
                 ).first()
 
-                # create slot if not exists
-                if not existing_slot:
-
+                if not existing:
                     slot = DoctorSlot(
                         doctor_id=doctor.id,
                         availability_id=availability.id,
@@ -88,18 +95,15 @@ def generate_slots_for_next_7_days():
                         end_time=next_slot.time(),
                         status="available"
                     )
-
                     db.add(slot)
 
-                # move to next interval
                 current_slot = next_slot
 
     db.commit()
-
     print("✅ Slots generated successfully!")
 
 
 # =========================
-# RUN SCRIPT
+# RUN
 # =========================
 generate_slots_for_next_7_days()

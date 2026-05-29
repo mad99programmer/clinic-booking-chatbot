@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import date, time, timedelta, datetime
 
 from database import SessionLocal
-from models import User, Doctor, DoctorSlot, DoctorAvailability, Appointment
+from models import User, Doctor, DoctorSlot, DoctorAvailability, Appointment,DoctorLeave
 
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -71,7 +71,25 @@ class SlotBulkCreate(BaseModel):
     slot_duration_minutes: int = 20
     skip_sundays: bool = True
 
+# =========================
+# AVAILABILITY SCHEMAS
+# =========================
+ 
+class AvailabilityCreate(BaseModel):
+    weekday: str
+    start_time: time
+    end_time: time
 
+
+
+# =========================
+# LEAVE SCHEMA
+# =========================
+ 
+class LeaveCreate(BaseModel):
+    leave_date: date
+    reason: Optional[str] = None
+ 
 # =========================
 # DASHBOARD — STATS
 # =========================
@@ -589,3 +607,195 @@ def get_patients(db: Session = Depends(get_db)):
         })
 
     return result
+
+
+# =========================
+# AVAILABILITY — GET FOR DOCTOR
+# =========================
+@router.get("/doctors/{doctor_id}/availability")
+def get_doctor_availability(
+    doctor_id: int,
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+ 
+    availabilities = db.query(DoctorAvailability).filter(
+        DoctorAvailability.doctor_id == doctor_id
+    ).all()
+ 
+    return [
+        {
+            "id":         a.id,
+            "weekday":    a.weekday,
+            "start_time": a.start_time.strftime("%H:%M"),
+            "end_time":   a.end_time.strftime("%H:%M"),
+            "is_active":  a.is_active,
+        }
+        for a in availabilities
+    ]
+ 
+ 
+# =========================
+# AVAILABILITY — ADD FOR DOCTOR
+# =========================
+@router.post("/doctors/{doctor_id}/availability")
+def add_doctor_availability(
+    doctor_id: int,
+    payload: AvailabilityCreate,
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+ 
+    # prevent duplicate weekday entry
+    existing = db.query(DoctorAvailability).filter(
+        DoctorAvailability.doctor_id == doctor_id,
+        DoctorAvailability.weekday == payload.weekday,
+        DoctorAvailability.is_active == True
+    ).first()
+ 
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Availability for {payload.weekday} already exists"
+        )
+ 
+    availability = DoctorAvailability(
+        doctor_id=doctor_id,
+        weekday=payload.weekday,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        is_active=True
+    )
+ 
+    db.add(availability)
+    db.commit()
+    db.refresh(availability)
+ 
+    return {
+        "message": "Availability added successfully",
+        "id": availability.id
+    }
+ 
+ 
+# =========================
+# AVAILABILITY — DELETE
+# =========================
+@router.delete("/availability/{availability_id}")
+def delete_availability(
+    availability_id: int,
+    db: Session = Depends(get_db)
+):
+    availability = db.query(DoctorAvailability).filter(
+        DoctorAvailability.id == availability_id
+    ).first()
+ 
+    if not availability:
+        raise HTTPException(status_code=404, detail="Availability not found")
+ 
+    db.delete(availability)
+    db.commit()
+ 
+    return {"message": "Availability deleted successfully"}
+
+
+# =========================
+# LEAVE — GET FOR DOCTOR
+# =========================
+@router.get("/doctors/{doctor_id}/leave")
+def get_doctor_leaves(
+    doctor_id: int,
+    db: Session = Depends(get_db)
+):
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+ 
+    leaves = db.query(DoctorLeave).filter(
+        DoctorLeave.doctor_id == doctor_id,
+        DoctorLeave.leave_date >= date.today()
+    ).order_by(DoctorLeave.leave_date).all()
+ 
+    return [
+        {
+            "id":         l.id,
+            "leave_date": str(l.leave_date),
+            "reason":     l.reason or "",
+        }
+        for l in leaves
+    ]
+ 
+ 
+# =========================
+# LEAVE — MARK LEAVE
+# handles: cancel booked appointments + notify patients + delete available slots
+# =========================
+@router.post("/doctors/{doctor_id}/leave")
+@router.post("/doctors/{doctor_id}/leave")
+def mark_leave(
+    doctor_id: int,
+    payload: LeaveCreate,
+    db: Session = Depends(get_db)
+):
+    from messaging import send_reply
+
+    doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+
+    existing = db.query(DoctorLeave).filter(
+        DoctorLeave.doctor_id  == doctor_id,
+        DoctorLeave.leave_date == payload.leave_date
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Leave already marked for this date")
+
+    # cancel booked appointments + notify patients
+    booked = db.query(Appointment).filter(
+        Appointment.doctor_id        == doctor_id,
+        Appointment.appointment_date == payload.leave_date,
+        Appointment.status           == "booked"
+    ).all()
+
+    cancelled_count = 0
+    for appt in booked:
+        appt.status = "cancelled"
+        patient = db.query(User).filter(User.id == appt.user_id).first()
+        if patient:
+            formatted_date = payload.leave_date.strftime("%d %B %Y")
+            msg = (
+                f"Dear {patient.name},\n\n"
+                f"Your appointment with Dr. {doctor.name} on "
+                f"{formatted_date} has been cancelled due to doctor unavailability.\n\n"
+                f"Reply *hi* to rebook."
+            )
+            try:
+                send_reply(patient.phone_number, msg)
+            except Exception:
+                pass
+        cancelled_count += 1
+
+    # mark available slots as cancelled — no deletion, avoids FK violation
+    db.query(DoctorSlot).filter(
+        DoctorSlot.doctor_id == doctor_id,
+        DoctorSlot.slot_date == payload.leave_date,
+        DoctorSlot.status    == "available"
+    ).update({"status": "cancelled"})
+
+    # save leave record
+    leave = DoctorLeave(
+        doctor_id  = doctor_id,
+        leave_date = payload.leave_date,
+        reason     = payload.reason
+    )
+    db.add(leave)
+    db.commit()
+
+    return {
+        "message":                "Leave marked successfully",
+        "cancelled_appointments": cancelled_count,
+        "patients_notified":      cancelled_count,
+    }

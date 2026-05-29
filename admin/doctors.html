@@ -29,70 +29,38 @@ tailwind.config = {
 <style>
   * { box-sizing: border-box; }
   body { background: #f8f7ff; font-family: 'Outfit', sans-serif; }
-
   #sidebar { scrollbar-width: none; }
   #sidebar::-webkit-scrollbar { display: none; }
-
   .nav-item { transition: all 0.15s; }
   .nav-item:hover { background: rgba(83,64,192,0.08); color: #3d2b96; }
-  .nav-item.active {
-    background: linear-gradient(135deg, #5340c0, #3d2b96);
-    color: white !important;
-  }
-  .nav-item.active::before {
-    content: '';
-    position: absolute; left: 0; top: 20%; bottom: 20%;
-    width: 3px; background: #22d47a;
-    border-radius: 0 3px 3px 0;
-  }
-
+  .nav-item.active { background: linear-gradient(135deg, #5340c0, #3d2b96); color: white !important; }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; background: #22d47a; border-radius: 0 3px 3px 0; }
   .blob { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; }
-
   .doctor-card { transition: transform 0.2s, box-shadow 0.2s; }
   .doctor-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(83,64,192,0.10); }
-
-  @keyframes fadeUp {
-    from { opacity:0; transform:translateY(16px); }
-    to   { opacity:1; transform:translateY(0); }
-  }
-  .fade-up { animation: fadeUp 0.5s ease both; }
-  .delay-1 { animation-delay: 0.05s; }
-  .delay-2 { animation-delay: 0.10s; }
-
-  .skeleton {
-    background: linear-gradient(90deg, #e8e4f8 25%, #f0ecff 50%, #e8e4f8 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 8px;
-  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .fade-up  { animation: fadeUp 0.5s ease both; }
+  .delay-1  { animation-delay: 0.05s; }
+  .delay-2  { animation-delay: 0.10s; }
+  .skeleton { background: linear-gradient(90deg, #e8e4f8 25%, #f0ecff 50%, #e8e4f8 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
   #overlay { transition: opacity 0.3s; }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-thumb { background: rgba(83,64,192,0.2); border-radius: 99px; }
-
   select, input { appearance: none; -webkit-appearance: none; }
-
-  /* drawer */
   #drawer { transition: transform 0.3s cubic-bezier(.4,0,.2,1); }
-  #drawer-backdrop { transition: opacity 0.3s; }
-
-  input[type=number]::-webkit-inner-spin-button { opacity: 1; }
-
   .field-label { font-size: 11px; font-weight: 600; color: #8b7ce8; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; display: block; }
-  .field-input {
-    width: 100%; background: #f4f2ff; border: 1.5px solid #d4ccff;
-    color: #1a1040; font-size: 14px; border-radius: 12px;
-    padding: 9px 14px; outline: none; font-family: 'Outfit', sans-serif;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
+  .field-input { width: 100%; background: #f4f2ff; border: 1.5px solid #d4ccff; color: #1a1040; font-size: 14px; border-radius: 12px; padding: 9px 14px; outline: none; font-family: 'Outfit', sans-serif; transition: border-color 0.15s, box-shadow 0.15s; }
   .field-input:focus { border-color: #5340c0; box-shadow: 0 0 0 3px rgba(83,64,192,0.12); }
   .field-input::placeholder { color: #b0a4f5; }
+  .tab-btn { transition: all 0.15s; }
+  .tab-btn.active { background: linear-gradient(135deg, #5340c0, #3d2b96); color: white; box-shadow: 0 4px 12px rgba(83,64,192,0.25); }
+  .weekday-chip { transition: all 0.15s; cursor: pointer; user-select: none; }
+  .weekday-chip.selected { background: linear-gradient(135deg, #5340c0, #3d2b96); color: white; border-color: #3d2b96; }
 </style>
 </head>
 <body class="min-h-screen">
 
-<!-- MOBILE OVERLAY -->
 <div id="overlay" class="fixed inset-0 bg-purple-900/40 z-40 hidden lg:hidden backdrop-blur-sm" onclick="closeSidebar()"></div>
 
 <!-- ══ SIDEBAR ══ -->
@@ -106,34 +74,18 @@ tailwind.config = {
       </div>
     </div>
   </div>
-
   <nav class="flex-1 px-3 py-4 flex flex-col gap-0.5">
     <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2">Main</div>
-    <a href="dashboard.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
-      <span class="text-base">📊</span> Dashboard
-    </a>
-    <a href="appointments.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
-      <span class="text-base">📅</span> Appointments
-    </a>
-    <a href="slots.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
-      <span class="text-base">🕐</span> Slots
-    </a>
+    <a href="dashboard.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">📊</span> Dashboard</a>
+    <a href="appointments.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">📅</span> Appointments</a>
+    <a href="slots.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">🕐</span> Slots</a>
     <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2 mt-4">Manage</div>
-    <a href="doctors.html" class="nav-item active relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer text-white">
-      <span class="text-base">👨‍⚕️</span> Doctors
-    </a>
-    <a href="patients.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
-      <span class="text-base">👥</span> Patients
-    </a>
-    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
-      <span class="text-base">💬</span> WhatsApp Bot
-    </a>
+    <a href="doctors.html" class="nav-item active relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer text-white"><span class="text-base">👨‍⚕️</span> Doctors</a>
+    <a href="patients.html" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">👥</span> Patients</a>
+    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">💬</span> WhatsApp Bot</a>
     <div class="text-[10px] font-semibold text-purple-300 uppercase tracking-widest px-3 mb-2 mt-4">System</div>
-    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer">
-      <span class="text-base">⚙️</span> Settings
-    </a>
+    <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">⚙️</span> Settings</a>
   </nav>
-
   <div class="px-3 py-4 border-t border-purple-50">
     <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition">
       <div class="w-8 h-8 rounded-full bg-purple-700 grid place-items-center text-sm font-bold text-white flex-shrink-0">A</div>
@@ -148,31 +100,24 @@ tailwind.config = {
 
 <!-- ══ MAIN ══ -->
 <div class="lg:ml-60 min-h-screen flex flex-col">
-
-  <!-- TOPBAR -->
   <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-purple-100 px-5 lg:px-8 h-[60px] flex items-center gap-4 shadow-sm">
     <button onclick="toggleSidebar()" class="lg:hidden text-purple-500 hover:text-purple-700 text-xl p-1">☰</button>
-    <div>
-      <h1 class="font-serif font-bold text-purple-900 text-lg leading-tight">Doctors</h1>
-    </div>
+    <h1 class="font-serif font-bold text-purple-900 text-lg leading-tight">Doctors</h1>
     <div class="ml-auto flex items-center gap-3">
       <span id="doctor-count" class="hidden sm:block text-xs text-purple-400 font-medium"></span>
-      <button onclick="openDrawer(null)"
+      <button onclick="openDrawer('add', null)"
         class="flex items-center gap-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-purple-200">
         <span class="text-base leading-none">+</span> Add Doctor
       </button>
     </div>
   </header>
 
-  <!-- PAGE CONTENT -->
   <main class="flex-1 px-5 lg:px-8 py-7 relative overflow-hidden">
-
     <div class="blob w-96 h-96 bg-purple-200/40 -top-20 -right-20 z-0"></div>
     <div class="blob w-64 h-64 bg-green-400/15 bottom-10 left-10 z-0"></div>
-
     <div class="relative z-10">
 
-      <!-- filter / search bar -->
+      <!-- filters -->
       <div class="fade-up mb-5 flex flex-wrap gap-3 items-center">
         <div class="relative flex-1 min-w-[200px] max-w-xs">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-purple-300 text-sm">🔍</span>
@@ -197,52 +142,24 @@ tailwind.config = {
         </div>
       </div>
 
-      <!-- CARDS GRID -->
+      <!-- cards -->
       <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 fade-up delay-1">
-        <!-- skeleton cards -->
-        <div class="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="skeleton w-12 h-12 rounded-2xl"></div>
-            <div class="flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-20"></div></div>
-          </div>
-          <div class="skeleton h-3 w-full mb-2"></div>
-          <div class="skeleton h-3 w-3/4"></div>
-        </div>
-        <div class="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="skeleton w-12 h-12 rounded-2xl"></div>
-            <div class="flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-20"></div></div>
-          </div>
-          <div class="skeleton h-3 w-full mb-2"></div>
-          <div class="skeleton h-3 w-3/4"></div>
-        </div>
-        <div class="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="skeleton w-12 h-12 rounded-2xl"></div>
-            <div class="flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-20"></div></div>
-          </div>
-          <div class="skeleton h-3 w-full mb-2"></div>
-          <div class="skeleton h-3 w-3/4"></div>
-        </div>
+        <div class="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm"><div class="flex items-center gap-3 mb-4"><div class="skeleton w-12 h-12 rounded-2xl"></div><div class="flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-20"></div></div></div><div class="skeleton h-3 w-full mb-2"></div><div class="skeleton h-3 w-3/4"></div></div>
+        <div class="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm"><div class="flex items-center gap-3 mb-4"><div class="skeleton w-12 h-12 rounded-2xl"></div><div class="flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-20"></div></div></div><div class="skeleton h-3 w-full mb-2"></div><div class="skeleton h-3 w-3/4"></div></div>
+        <div class="bg-white border border-purple-100 rounded-2xl p-5 shadow-sm"><div class="flex items-center gap-3 mb-4"><div class="skeleton w-12 h-12 rounded-2xl"></div><div class="flex-1"><div class="skeleton h-4 w-32 mb-2"></div><div class="skeleton h-3 w-20"></div></div></div><div class="skeleton h-3 w-full mb-2"></div><div class="skeleton h-3 w-3/4"></div></div>
       </div>
 
-      <!-- empty -->
       <div id="empty-state" class="hidden py-20 text-center">
         <div class="text-5xl mb-4">👨‍⚕️</div>
         <div class="text-purple-500 text-base font-semibold">No doctors found</div>
         <div class="text-purple-300 text-sm mt-1">Add your first doctor to get started</div>
-        <button onclick="openDrawer(null)" class="mt-5 bg-purple-700 hover:bg-purple-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-purple-200">
-          + Add Doctor
-        </button>
+        <button onclick="openDrawer('add', null)" class="mt-5 bg-purple-700 hover:bg-purple-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition shadow-lg shadow-purple-200">+ Add Doctor</button>
       </div>
-
-      <!-- error -->
       <div id="error-state" class="hidden py-16 text-center">
         <div class="text-4xl mb-3">⚠️</div>
         <div class="text-red-400 text-sm font-medium">Failed to load doctors</div>
         <button onclick="loadDoctors()" class="mt-4 text-xs text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl transition font-medium">Retry</button>
       </div>
-
     </div>
   </main>
 </div>
@@ -250,10 +167,9 @@ tailwind.config = {
 <!-- ══ DRAWER BACKDROP ══ -->
 <div id="drawer-backdrop" class="fixed inset-0 bg-purple-900/40 backdrop-blur-sm z-50 hidden" onclick="closeDrawer()"></div>
 
-<!-- ══ ADD / EDIT DRAWER ══ -->
+<!-- ══ DRAWER ══ -->
 <div id="drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl shadow-purple-200 z-50 translate-x-full flex flex-col border-l border-purple-100">
 
-  <!-- drawer header -->
   <div class="px-6 py-5 border-b border-purple-50 flex items-center justify-between flex-shrink-0">
     <div>
       <h2 id="drawer-title" class="font-serif font-bold text-purple-900 text-lg">Add Doctor</h2>
@@ -262,46 +178,51 @@ tailwind.config = {
     <button onclick="closeDrawer()" class="w-8 h-8 rounded-xl bg-purple-50 hover:bg-purple-100 grid place-items-center text-purple-400 hover:text-purple-700 transition text-lg">×</button>
   </div>
 
-  <!-- drawer body -->
+  <!-- tabs — only show on edit mode -->
+  <div id="drawer-tabs" style="display:none" class="px-6 pt-4 pb-0 gap-2 flex-shrink-0">
+    <button id="tab-info" onclick="switchDrawerTab('info')"
+      class="tab-btn active flex-1 text-xs font-semibold py-2 rounded-xl border border-purple-200 text-white">
+      Doctor Info
+    </button>
+    <button id="tab-avail" onclick="switchDrawerTab('avail')"
+      class="tab-btn flex-1 text-xs font-semibold py-2 rounded-xl border border-purple-200 text-purple-500 hover:bg-purple-50">
+      Availability
+    </button>
+    <button id="tab-leave" onclick="switchDrawerTab('leave')"
+      class="tab-btn flex-1 text-xs font-semibold py-2 rounded-xl border border-purple-200 text-purple-500 hover:bg-purple-50">
+      🏖️ Leave
+    </button>
+  </div>
+
   <div class="flex-1 overflow-y-auto px-6 py-5">
-    <form id="doctor-form" onsubmit="submitForm(event)" autocomplete="off">
-      <input type="hidden" id="form-doctor-id">
 
+    <!-- ── INFO FORM ── -->
+    <div id="panel-info">
       <div class="grid grid-cols-1 gap-4">
-
-        <!-- Name -->
         <div>
           <label class="field-label">Full Name <span class="text-red-400">*</span></label>
           <input id="f-name" type="text" placeholder="Dr. John Smith" required class="field-input">
         </div>
-
-        <!-- Specialization -->
         <div>
           <label class="field-label">Specialization <span class="text-red-400">*</span></label>
           <input id="f-spec" type="text" placeholder="e.g. Cardiologist" required class="field-input">
         </div>
-
-        <!-- Qualification -->
         <div>
           <label class="field-label">Qualification</label>
           <input id="f-qual" type="text" placeholder="e.g. MBBS, MD" class="field-input">
         </div>
-
-        <!-- Experience + Fee — 2 col -->
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="field-label">Experience (yrs)</label>
             <input id="f-exp" type="number" min="0" max="60" placeholder="10" class="field-input">
           </div>
           <div>
-            <label class="field-label">Consultation Fee (₹)</label>
+            <label class="field-label">Fee (₹)</label>
             <input id="f-fee" type="number" min="0" placeholder="500" class="field-input">
           </div>
         </div>
-
-        <!-- Duration -->
         <div>
-          <label class="field-label">Slot Duration (minutes) <span class="text-red-400">*</span></label>
+          <label class="field-label">Slot Duration <span class="text-red-400">*</span></label>
           <div class="relative">
             <select id="f-duration" required class="field-input pr-8 cursor-pointer">
               <option value="15">15 min</option>
@@ -313,99 +234,163 @@ tailwind.config = {
             <span class="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 pointer-events-none text-xs">▾</span>
           </div>
         </div>
-
-        <!-- Phone -->
         <div>
           <label class="field-label">Phone</label>
           <input id="f-phone" type="tel" placeholder="+91 98765 43210" class="field-input">
         </div>
-
-        <!-- Email -->
         <div>
           <label class="field-label">Email</label>
           <input id="f-email" type="email" placeholder="doctor@cityclinic.com" class="field-input">
         </div>
+      </div>
+      <div id="form-error" class="hidden mt-4 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3"></div>
+    </div>
 
+    <!-- ── AVAILABILITY PANEL ── -->
+    <div id="panel-avail" class="hidden">
+
+      <!-- existing availability -->
+      <div class="mb-5">
+        <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider mb-3">Current Schedule</div>
+        <div id="avail-list" class="space-y-2">
+          <div class="text-purple-300 text-sm text-center py-4">Loading…</div>
+        </div>
       </div>
 
-      <!-- error msg -->
-      <div id="form-error" class="hidden mt-4 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3"></div>
+      <!-- add new day -->
+      <div class="bg-purple-50 rounded-2xl p-4 border border-purple-100">
+        <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider mb-3">Add Day</div>
 
-    </form>
+        <!-- weekday chips -->
+        <div class="mb-3">
+          <label class="field-label">Weekday</label>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Monday">Mon</span>
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Tuesday">Tue</span>
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Wednesday">Wed</span>
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Thursday">Thu</span>
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Friday">Fri</span>
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Saturday">Sat</span>
+            <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Sunday">Sun</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="field-label">Start Time</label>
+            <input id="a-start" type="time" class="field-input">
+          </div>
+          <div>
+            <label class="field-label">End Time</label>
+            <input id="a-end" type="time" class="field-input">
+          </div>
+        </div>
+
+        <div id="avail-error" class="hidden mb-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3"></div>
+
+        <button onclick="addAvailability()"
+          class="w-full bg-purple-700 hover:bg-purple-800 text-white text-sm font-semibold py-2.5 rounded-xl transition shadow-lg shadow-purple-200">
+          + Add Day
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── LEAVE PANEL ── -->
+    <div id="panel-leave" class="hidden">
+
+      <div class="mb-5">
+        <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider mb-3">Upcoming Leaves</div>
+        <div id="leave-list" class="space-y-2">
+          <div class="text-purple-300 text-sm text-center py-4">Loading…</div>
+        </div>
+      </div>
+
+      <div class="bg-red-50 rounded-2xl p-4 border border-red-100">
+        <div class="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">Mark Leave</div>
+        <div class="mb-3">
+          <label class="field-label">Leave Date <span class="text-red-400">*</span></label>
+          <input id="l-date" type="date" class="field-input">
+        </div>
+        <div class="mb-3">
+          <label class="field-label">Reason (optional)</label>
+          <input id="l-reason" type="text" placeholder="e.g. Personal, Medical" class="field-input">
+        </div>
+        <div id="leave-warning" class="hidden mb-3 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-xl px-4 py-3"></div>
+        <div id="leave-error" class="hidden mb-3 bg-red-100 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3"></div>
+        <button onclick="markLeave()"
+          class="w-full bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2.5 rounded-xl transition shadow-lg shadow-red-200">
+          Mark Leave
+        </button>
+        <p class="text-red-400 text-[11px] mt-2 text-center">⚠️ Booked appointments on this date will be cancelled and patients notified</p>
+      </div>
+
+    </div>
+
   </div>
 
-  <!-- drawer footer -->
-  <div class="px-6 py-4 border-t border-purple-50 flex gap-3 flex-shrink-0">
+  <!-- footer -->
+  <div id="drawer-footer" class="px-6 py-4 border-t border-purple-50 flex gap-3 flex-shrink-0">
     <button onclick="closeDrawer()" type="button"
       class="flex-1 text-sm font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 py-2.5 rounded-xl transition">
       Cancel
     </button>
-    <button onclick="submitForm(event)" id="submit-btn" type="button"
+    <button id="submit-btn" onclick="submitForm()"
       class="flex-1 text-sm font-semibold text-white bg-purple-700 hover:bg-purple-800 py-2.5 rounded-xl transition shadow-lg shadow-purple-200">
       Save Doctor
     </button>
   </div>
 </div>
 
-<!-- ══ TOGGLE CONFIRM MODAL ══ -->
+<!-- ══ TOGGLE MODAL ══ -->
 <div id="toggle-modal" class="fixed inset-0 bg-purple-900/40 backdrop-blur-sm z-[60] hidden items-center justify-center flex">
-  <div class="bg-white rounded-2xl shadow-2xl shadow-purple-200 p-6 w-full max-w-sm mx-4 border border-purple-100">
+  <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 border border-purple-100">
     <div id="toggle-icon" class="text-3xl mb-3 text-center"></div>
     <h3 id="toggle-title" class="font-serif font-bold text-purple-900 text-lg text-center mb-1"></h3>
     <p id="toggle-desc" class="text-purple-400 text-sm text-center mb-5"></p>
     <div class="flex gap-3">
-      <button onclick="closeToggleModal()" class="flex-1 text-sm font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 py-2.5 rounded-xl transition">
-        Cancel
-      </button>
-      <button id="toggle-confirm-btn" onclick="confirmToggle()"
-        class="flex-1 text-sm font-semibold text-white py-2.5 rounded-xl transition shadow-lg">
-        Confirm
-      </button>
+      <button onclick="closeToggleModal()" class="flex-1 text-sm font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 py-2.5 rounded-xl transition">Cancel</button>
+      <button id="toggle-confirm-btn" onclick="confirmToggle()" class="flex-1 text-sm font-semibold text-white py-2.5 rounded-xl transition shadow-lg"></button>
     </div>
   </div>
 </div>
 
 <script>
 const API = 'http://localhost:8000';
-
 const COLORS = [
-  ['bg-purple-100','text-purple-700'],
-  ['bg-green-100','text-green-700'],
-  ['bg-pink-100','text-pink-700'],
-  ['bg-amber-100','text-amber-700'],
-  ['bg-cyan-100','text-cyan-700'],
-  ['bg-indigo-100','text-indigo-700'],
+  ['bg-purple-100','text-purple-700'],['bg-green-100','text-green-700'],
+  ['bg-pink-100','text-pink-700'],['bg-amber-100','text-amber-700'],
+  ['bg-cyan-100','text-cyan-700'],['bg-indigo-100','text-indigo-700'],
 ];
+const WEEKDAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
 function avatarCls(id) { return COLORS[id % COLORS.length]; }
 function initials(name) { return name.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2); }
 
-let allDoctors = [];
-let pendingToggleId = null;
+let allDoctors       = [];
+let currentDrawerMode = null; // 'add' | 'edit'
+let currentDoctorId   = null;
+let currentDrawerTab  = 'info';
+let selectedWeekday   = null;
+let pendingToggleId   = null;
 let pendingToggleActive = null;
 
-// ══ LOAD ══
+// ══ LOAD DOCTORS ══
 async function loadDoctors() {
   document.getElementById('empty-state').classList.add('hidden');
   document.getElementById('error-state').classList.add('hidden');
-
   try {
     const res  = await fetch(`${API}/admin/doctors`);
     if(!res.ok) throw new Error();
     allDoctors = await res.json();
 
-    // populate spec filter
     const specs = [...new Set(allDoctors.map(d => d.specialization))].sort();
     const specSel = document.getElementById('filter-spec');
     specSel.innerHTML = '<option value="">All specializations</option>';
-    specs.forEach(s => {
-      const o = document.createElement('option');
-      o.value = s; o.textContent = s;
-      specSel.appendChild(o);
-    });
+    specs.forEach(s => { const o = document.createElement('option'); o.value=s; o.textContent=s; specSel.appendChild(o); });
 
-    document.getElementById('doctor-count').textContent = `${allDoctors.length} doctor${allDoctors.length !== 1 ? 's' : ''}`;
+    document.getElementById('doctor-count').textContent = `${allDoctors.length} doctor${allDoctors.length!==1?'s':''}`;
     renderCards();
-
   } catch(e) {
     document.getElementById('cards-grid').innerHTML = '';
     document.getElementById('error-state').classList.remove('hidden');
@@ -418,82 +403,46 @@ function renderCards() {
   const filterStat = document.getElementById('filter-status').value;
   const filterSpec = document.getElementById('filter-spec').value;
 
-  let filtered = allDoctors.filter(d => {
-    const matchSearch = d.name.toLowerCase().includes(search) || d.specialization.toLowerCase().includes(search);
-    const matchStat   = !filterStat || (filterStat === 'active' ? d.is_active : !d.is_active);
-    const matchSpec   = !filterSpec || d.specialization === filterSpec;
-    return matchSearch && matchStat && matchSpec;
+  const filtered = allDoctors.filter(d => {
+    const ms = d.name.toLowerCase().includes(search) || d.specialization.toLowerCase().includes(search);
+    const mst = !filterStat || (filterStat==='active' ? d.is_active : !d.is_active);
+    const msp = !filterSpec || d.specialization===filterSpec;
+    return ms && mst && msp;
   });
 
   const grid = document.getElementById('cards-grid');
-
-  if(!filtered.length) {
-    grid.innerHTML = '';
-    document.getElementById('empty-state').classList.remove('hidden');
-    return;
-  }
+  if(!filtered.length) { grid.innerHTML=''; document.getElementById('empty-state').classList.remove('hidden'); return; }
   document.getElementById('empty-state').classList.add('hidden');
 
-  grid.innerHTML = filtered.map((d, i) => {
-    const [bg, tc] = avatarCls(d.id);
-    const inactiveOverlay = !d.is_active ? 'opacity-60' : '';
+  grid.innerHTML = filtered.map((d,i) => {
+    const [bg,tc] = avatarCls(d.id);
+    const dim = !d.is_active ? 'opacity-60' : '';
     return `
-    <div class="doctor-card ${inactiveOverlay} bg-white border border-purple-100 rounded-2xl p-5 shadow-sm fade-up" style="animation-delay:${i*0.04}s">
+    <div class="doctor-card ${dim} bg-white border border-purple-100 rounded-2xl p-5 shadow-sm fade-up" style="animation-delay:${i*0.04}s">
       <div class="flex items-start gap-3 mb-4">
-        <div class="w-12 h-12 rounded-2xl ${bg} ${tc} grid place-items-center text-lg font-bold flex-shrink-0 font-serif">
-          ${initials(d.name)}
-        </div>
+        <div class="w-12 h-12 rounded-2xl ${bg} ${tc} grid place-items-center text-lg font-bold flex-shrink-0 font-serif">${initials(d.name)}</div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="font-semibold text-purple-900 text-sm truncate">${d.name}</span>
             ${d.is_active
               ? `<span class="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 text-[10px] font-semibold px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>Active</span>`
-              : `<span class="inline-flex items-center gap-1 bg-red-50 text-red-500 border border-red-200 text-[10px] font-semibold px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Inactive</span>`
-            }
+              : `<span class="inline-flex items-center gap-1 bg-red-50 text-red-500 border border-red-200 text-[10px] font-semibold px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Inactive</span>`}
           </div>
           <div class="text-purple-400 text-xs mt-0.5 truncate">${d.specialization}</div>
         </div>
       </div>
-
-      <!-- info grid -->
       <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
-        <div class="bg-purple-50/60 rounded-xl px-3 py-2">
-          <div class="text-purple-300 text-[10px] uppercase tracking-wider mb-0.5">Qualification</div>
-          <div class="text-purple-700 font-medium truncate">${d.qualification || '—'}</div>
-        </div>
-        <div class="bg-purple-50/60 rounded-xl px-3 py-2">
-          <div class="text-purple-300 text-[10px] uppercase tracking-wider mb-0.5">Experience</div>
-          <div class="text-purple-700 font-medium">${d.experience_years ? d.experience_years + ' yrs' : '—'}</div>
-        </div>
-        <div class="bg-purple-50/60 rounded-xl px-3 py-2">
-          <div class="text-purple-300 text-[10px] uppercase tracking-wider mb-0.5">Fee</div>
-          <div class="text-purple-700 font-medium">${d.consultation_fee ? '₹' + d.consultation_fee : '—'}</div>
-        </div>
-        <div class="bg-green-50/60 rounded-xl px-3 py-2">
-          <div class="text-green-400 text-[10px] uppercase tracking-wider mb-0.5">Slots left</div>
-          <div class="text-green-700 font-serif font-bold text-base leading-tight">${d.available_slots}</div>
-        </div>
+        <div class="bg-purple-50/60 rounded-xl px-3 py-2"><div class="text-purple-300 text-[10px] uppercase tracking-wider mb-0.5">Qualification</div><div class="text-purple-700 font-medium truncate">${d.qualification||'—'}</div></div>
+        <div class="bg-purple-50/60 rounded-xl px-3 py-2"><div class="text-purple-300 text-[10px] uppercase tracking-wider mb-0.5">Experience</div><div class="text-purple-700 font-medium">${d.experience_years?d.experience_years+' yrs':'—'}</div></div>
+        <div class="bg-purple-50/60 rounded-xl px-3 py-2"><div class="text-purple-300 text-[10px] uppercase tracking-wider mb-0.5">Fee</div><div class="text-purple-700 font-medium">${d.consultation_fee?'₹'+d.consultation_fee:'—'}</div></div>
+        <div class="bg-green-50/60 rounded-xl px-3 py-2"><div class="text-green-400 text-[10px] uppercase tracking-wider mb-0.5">Slots left</div><div class="text-green-700 font-serif font-bold text-base leading-tight">${d.available_slots}</div></div>
       </div>
-
-      <!-- contact -->
-      ${(d.phone || d.email) ? `
-      <div class="mb-4 space-y-1">
-        ${d.phone ? `<div class="flex items-center gap-2 text-xs text-purple-500"><span>📞</span><span>${d.phone}</span></div>` : ''}
-        ${d.email ? `<div class="flex items-center gap-2 text-xs text-purple-500"><span>✉️</span><span class="truncate">${d.email}</span></div>` : ''}
-      </div>` : ''}
-
-      <!-- actions -->
+      ${(d.phone||d.email)?`<div class="mb-4 space-y-1">${d.phone?`<div class="flex items-center gap-2 text-xs text-purple-500"><span>📞</span><span>${d.phone}</span></div>`:''} ${d.email?`<div class="flex items-center gap-2 text-xs text-purple-500"><span>✉️</span><span class="truncate">${d.email}</span></div>`:''}</div>`:''}
       <div class="flex gap-2 pt-3 border-t border-purple-50">
-        <button onclick="openDrawer(${d.id})"
-          class="flex-1 text-xs font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 py-2 rounded-xl transition">
-          ✏️ Edit
-        </button>
+        <button onclick="openDrawer('edit', ${d.id})" class="flex-1 text-xs font-semibold text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 py-2 rounded-xl transition">✏️ Edit</button>
         <button onclick="openToggleModal(${d.id}, ${d.is_active})"
-          class="flex-1 text-xs font-semibold py-2 rounded-xl transition border
-          ${d.is_active
-            ? 'text-red-500 border-red-200 bg-red-50 hover:bg-red-100'
-            : 'text-green-600 border-green-200 bg-green-50 hover:bg-green-100'}">
-          ${d.is_active ? '🚫 Deactivate' : '✅ Reactivate'}
+          class="flex-1 text-xs font-semibold py-2 rounded-xl transition border ${d.is_active?'text-red-500 border-red-200 bg-red-50 hover:bg-red-100':'text-green-600 border-green-200 bg-green-50 hover:bg-green-100'}">
+          ${d.is_active?'🚫 Deactivate':'✅ Reactivate'}
         </button>
       </div>
     </div>`;
@@ -501,14 +450,16 @@ function renderCards() {
 }
 
 // ══ DRAWER ══
-function openDrawer(doctorId) {
+function openDrawer(mode, doctorId) {
+  currentDrawerMode = mode;
+  currentDoctorId   = doctorId;
   clearForm();
-  if(doctorId) {
+
+  if(mode === 'edit' && doctorId) {
     const d = allDoctors.find(x => x.id === doctorId);
     if(!d) return;
     document.getElementById('drawer-title').textContent    = 'Edit Doctor';
     document.getElementById('drawer-subtitle').textContent = `Editing ${d.name}`;
-    document.getElementById('form-doctor-id').value = d.id;
     document.getElementById('f-name').value     = d.name;
     document.getElementById('f-spec').value     = d.specialization;
     document.getElementById('f-qual').value     = d.qualification || '';
@@ -518,11 +469,17 @@ function openDrawer(doctorId) {
     document.getElementById('f-phone').value    = d.phone || '';
     document.getElementById('f-email').value    = d.email || '';
     document.getElementById('submit-btn').textContent = 'Update Doctor';
+    // show tabs in edit mode
+    document.getElementById('drawer-tabs').style.display = 'flex';
+    switchDrawerTab('info');
   } else {
     document.getElementById('drawer-title').textContent    = 'Add Doctor';
     document.getElementById('drawer-subtitle').textContent = 'Fill in the details below';
     document.getElementById('submit-btn').textContent      = 'Save Doctor';
+    document.getElementById('drawer-tabs').style.display = 'none';
+    switchDrawerTab('info');
   }
+
   document.getElementById('drawer').classList.remove('translate-x-full');
   document.getElementById('drawer-backdrop').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -532,26 +489,41 @@ function closeDrawer() {
   document.getElementById('drawer').classList.add('translate-x-full');
   document.getElementById('drawer-backdrop').classList.add('hidden');
   document.body.style.overflow = '';
+  selectedWeekday = null;
+}
+
+function switchDrawerTab(tab) {
+  currentDrawerTab = tab;
+  document.getElementById('panel-info').classList.toggle('hidden',  tab !== 'info');
+  document.getElementById('panel-avail').classList.toggle('hidden', tab !== 'avail');
+  document.getElementById('panel-leave').classList.toggle('hidden', tab !== 'leave');
+  document.getElementById('tab-info').classList.toggle('active',  tab === 'info');
+  document.getElementById('tab-avail').classList.toggle('active', tab === 'avail');
+  document.getElementById('tab-leave').classList.toggle('active', tab === 'leave');
+  document.getElementById('tab-info').classList.toggle('text-purple-500',  tab !== 'info');
+  document.getElementById('tab-avail').classList.toggle('text-purple-500', tab !== 'avail');
+  document.getElementById('tab-leave').classList.toggle('text-purple-500', tab !== 'leave');
+  // hide save btn on avail/leave tabs
+  document.getElementById('submit-btn').classList.toggle('hidden', tab === 'avail' || tab === 'leave');
+
+  if(tab === 'avail' && currentDoctorId) loadAvailability(currentDoctorId);
+  if(tab === 'leave' && currentDoctorId) loadLeaves(currentDoctorId);
 }
 
 function clearForm() {
-  document.getElementById('form-doctor-id').value = '';
-  ['f-name','f-spec','f-qual','f-exp','f-fee','f-phone','f-email'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  ['f-name','f-spec','f-qual','f-exp','f-fee','f-phone','f-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-duration').value = '30';
   document.getElementById('form-error').classList.add('hidden');
 }
 
-// ══ SUBMIT ══
-async function submitForm(e) {
-  if(e) e.preventDefault();
-  const btn = document.getElementById('submit-btn');
-  const errEl = document.getElementById('form-error');
+// ══ SUBMIT DOCTOR ══
+async function submitForm() {
+  const errEl    = document.getElementById('form-error');
+  const btn      = document.getElementById('submit-btn');
+  const doctorId = currentDoctorId;
   errEl.classList.add('hidden');
 
-  const doctorId = document.getElementById('form-doctor-id').value;
-  const payload  = {
+  const payload = {
     name:                  document.getElementById('f-name').value.trim(),
     specialization:        document.getElementById('f-spec').value.trim(),
     qualification:         document.getElementById('f-qual').value.trim() || null,
@@ -564,8 +536,7 @@ async function submitForm(e) {
 
   if(!payload.name || !payload.specialization) {
     errEl.textContent = 'Name and Specialization are required.';
-    errEl.classList.remove('hidden');
-    return;
+    errEl.classList.remove('hidden'); return;
   }
 
   btn.disabled = true;
@@ -574,36 +545,126 @@ async function submitForm(e) {
   try {
     const url    = doctorId ? `${API}/admin/doctors/${doctorId}` : `${API}/admin/doctors`;
     const method = doctorId ? 'PUT' : 'POST';
-    const res    = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if(!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Request failed');
+    const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    if(!res.ok) { const e = await res.json(); throw new Error(e.detail||'Request failed'); }
+
+    // if add — after save, switch to availability tab to set schedule
+    if(!doctorId) {
+      const result = await res.json();
+      currentDoctorId   = result.id;
+      currentDrawerMode = 'edit';
+      document.getElementById('drawer-title').textContent    = 'Doctor Added ✅';
+      document.getElementById('drawer-subtitle').textContent = 'Now set availability schedule';
+      document.getElementById('drawer-tabs').style.display = 'flex';
+      document.getElementById('submit-btn').textContent = 'Update Doctor';
+      await loadDoctors();
+      switchDrawerTab('avail');
+    } else {
+      closeDrawer();
+      await loadDoctors();
     }
-    closeDrawer();
-    await loadDoctors();
   } catch(err) {
     errEl.textContent = err.message || 'Something went wrong';
     errEl.classList.remove('hidden');
   } finally {
     btn.disabled = false;
-    btn.textContent = doctorId ? 'Update Doctor' : 'Save Doctor';
+    btn.textContent = currentDoctorId && currentDrawerMode==='edit' ? 'Update Doctor' : 'Save Doctor';
   }
+}
+
+// ══ AVAILABILITY ══
+async function loadAvailability(doctorId) {
+  const list = document.getElementById('avail-list');
+  list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">Loading…</div>';
+  try {
+    const res  = await fetch(`${API}/admin/doctors/${doctorId}/availability`);
+    const data = await res.json();
+
+    if(!data.length) {
+      list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">No schedule set yet</div>';
+      return;
+    }
+
+    list.innerHTML = data.map(a => `
+      <div class="flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-2.5">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-bold text-purple-700 bg-purple-100 px-2.5 py-1 rounded-lg w-10 text-center">${a.weekday.slice(0,3)}</span>
+          <span class="text-sm text-purple-800">${a.start_time} – ${a.end_time}</span>
+        </div>
+        <button onclick="deleteAvailability(${a.id})"
+          class="text-[11px] text-red-500 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition font-medium">
+          Remove
+        </button>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="text-red-400 text-sm text-center py-4">Failed to load</div>';
+  }
+}
+
+// weekday chip selection
+document.querySelectorAll('.weekday-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.weekday-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    selectedWeekday = chip.dataset.day;
+  });
+});
+
+async function addAvailability() {
+  const errEl = document.getElementById('avail-error');
+  errEl.classList.add('hidden');
+
+  const start = document.getElementById('a-start').value;
+  const end   = document.getElementById('a-end').value;
+
+  if(!selectedWeekday || !start || !end) {
+    errEl.textContent = 'Select weekday, start time and end time.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if(start >= end) {
+    errEl.textContent = 'End time must be after start time.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  try {
+    const res = await fetch(`${API}/admin/doctors/${currentDoctorId}/availability`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ weekday: selectedWeekday, start_time: start+':00', end_time: end+':00' })
+    });
+    if(!res.ok) { const e = await res.json(); throw new Error(e.detail||'Failed'); }
+
+    // reset
+    selectedWeekday = null;
+    document.querySelectorAll('.weekday-chip').forEach(c => c.classList.remove('selected'));
+    document.getElementById('a-start').value = '';
+    document.getElementById('a-end').value   = '';
+    loadAvailability(currentDoctorId);
+    await loadDoctors();
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function deleteAvailability(availId) {
+  if(!confirm('Remove this day from schedule?')) return;
+  try {
+    const res = await fetch(`${API}/admin/availability/${availId}`, { method:'DELETE' });
+    if(!res.ok) throw new Error();
+    loadAvailability(currentDoctorId);
+  } catch(e) { alert('Failed to remove'); }
 }
 
 // ══ TOGGLE ACTIVE ══
 function openToggleModal(id, isActive) {
-  pendingToggleId     = id;
-  pendingToggleActive = isActive;
-  const doctor = allDoctors.find(d => d.id === id);
+  pendingToggleId = id; pendingToggleActive = isActive;
+  const d = allDoctors.find(x => x.id === id);
   document.getElementById('toggle-icon').textContent  = isActive ? '🚫' : '✅';
   document.getElementById('toggle-title').textContent = isActive ? 'Deactivate Doctor?' : 'Reactivate Doctor?';
   document.getElementById('toggle-desc').textContent  = isActive
-    ? `${doctor?.name} will no longer appear in the WhatsApp bot.`
-    : `${doctor?.name} will be available for bookings again.`;
+    ? `${d?.name} will no longer appear in the WhatsApp bot.`
+    : `${d?.name} will be available for bookings again.`;
   const btn = document.getElementById('toggle-confirm-btn');
   btn.textContent = isActive ? 'Yes, deactivate' : 'Yes, reactivate';
   btn.className   = isActive
@@ -612,49 +673,137 @@ function openToggleModal(id, isActive) {
   document.getElementById('toggle-modal').classList.remove('hidden');
   document.getElementById('toggle-modal').classList.add('flex');
 }
-
 function closeToggleModal() {
   pendingToggleId = null;
   document.getElementById('toggle-modal').classList.add('hidden');
   document.getElementById('toggle-modal').classList.remove('flex');
 }
-
 async function confirmToggle() {
   if(!pendingToggleId) return;
   const btn = document.getElementById('toggle-confirm-btn');
   btn.disabled = true; btn.textContent = '…';
   try {
     const res = await fetch(`${API}/admin/doctors/${pendingToggleId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_active: !pendingToggleActive })
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({is_active: !pendingToggleActive})
     });
     if(!res.ok) throw new Error();
-    closeToggleModal();
-    await loadDoctors();
+    closeToggleModal(); await loadDoctors();
+  } catch(e) { alert('Failed'); } finally { btn.disabled=false; }
+}
+document.getElementById('toggle-modal').addEventListener('click', function(e) { if(e.target===this) closeToggleModal(); });
+
+
+// ══ LEAVE ══
+async function loadLeaves(doctorId) {
+  const list = document.getElementById('leave-list');
+  list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">Loading…</div>';
+  try {
+    const res  = await fetch(`${API}/admin/doctors/${doctorId}/leave`);
+    const data = await res.json();
+
+    if(!data.length) {
+      list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">No upcoming leaves</div>';
+      return;
+    }
+
+    list.innerHTML = data.map(l => {
+      const d = new Date(l.leave_date).toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+      return `
+      <div class="flex items-center justify-between bg-white border border-red-100 rounded-xl px-4 py-2.5">
+        <div class="flex items-center gap-3">
+          <span class="text-sm">🏖️</span>
+          <div>
+            <div class="text-sm font-medium text-purple-900">${d}</div>
+            ${l.reason ? `<div class="text-xs text-purple-400">${l.reason}</div>` : ''}
+          </div>
+        </div>
+        <button onclick="cancelLeave(${l.id})"
+          class="text-[11px] text-red-500 hover:text-red-700 border border-red-200 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition font-medium">
+          Cancel
+        </button>
+      </div>`;
+    }).join('');
   } catch(e) {
-    alert('Failed to update doctor status');
-  } finally {
-    btn.disabled = false;
+    list.innerHTML = '<div class="text-red-400 text-sm text-center py-4">Failed to load</div>';
   }
 }
 
-// close toggle modal on backdrop
-document.getElementById('toggle-modal').addEventListener('click', function(e) {
-  if(e.target === this) closeToggleModal();
-});
+async function markLeave() {
+  const errEl  = document.getElementById('leave-error');
+  const warnEl = document.getElementById('leave-warning');
+  errEl.classList.add('hidden');
+  warnEl.classList.add('hidden');
+
+  const leaveDate = document.getElementById('l-date').value;
+  const reason    = document.getElementById('l-reason').value.trim();
+
+  if(!leaveDate) {
+    errEl.textContent = 'Please select a leave date.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  if(new Date(leaveDate) < new Date(new Date().toDateString())) {
+    errEl.textContent = 'Cannot mark leave for past dates.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  // warn before submit
+  if(!warnEl.dataset.confirmed) {
+    warnEl.textContent = 'This will cancel all booked appointments on this date and notify patients. Click Mark Leave again to confirm.';
+    warnEl.classList.remove('hidden');
+    warnEl.dataset.confirmed = '1';
+    return;
+  }
+  warnEl.dataset.confirmed = '';
+
+  try {
+    const res = await fetch(`${API}/admin/doctors/${currentDoctorId}/leave`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ leave_date: leaveDate, reason: reason || null })
+    });
+    if(!res.ok) { const e = await res.json(); throw new Error(e.detail||'Failed'); }
+    const result = await res.json();
+
+    document.getElementById('l-date').value   = '';
+    document.getElementById('l-reason').value = '';
+    warnEl.classList.add('hidden');
+
+    if(result.cancelled_appointments > 0) {
+      showToast(`✅ Leave marked. ${result.cancelled_appointments} appointment(s) cancelled & patients notified.`);
+    } else {
+      showToast('✅ Leave marked successfully.');
+    }
+    loadLeaves(currentDoctorId);
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function cancelLeave(leaveId) {
+  if(!confirm('Cancel this leave? Slots will regenerate on next cron run.')) return;
+  try {
+    const res = await fetch(`${API}/admin/leave/${leaveId}`, {method:'DELETE'});
+    if(!res.ok) throw new Error();
+    loadLeaves(currentDoctorId);
+    showToast('✅ Leave cancelled. Slots will regenerate tonight.');
+  } catch(e) { alert('Failed to cancel leave'); }
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-purple-900 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-xl z-[70]';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(()=>t.remove(),400); }, 3000);
+}
 
 // ══ SIDEBAR ══
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('-translate-x-full');
-  document.getElementById('overlay').classList.toggle('hidden');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.add('-translate-x-full');
-  document.getElementById('overlay').classList.add('hidden');
-}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
+function closeSidebar()   { document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('overlay').classList.add('hidden'); }
 
-// ══ INIT ══
 loadDoctors();
 </script>
 </body>
