@@ -89,3 +89,9 @@ async def test_chat(
         "user_message": msg,
         "bot_reply": reply
     }
+
+@app.get("/run-slot-generator")
+def run_slot_generator():
+    from slot_generator import generate_slots_for_next_7_days
+    generate_slots_for_next_7_days()
+    return {"status": "slots generated"}
