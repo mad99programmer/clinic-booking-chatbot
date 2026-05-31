@@ -672,19 +672,26 @@ def add_doctor_availability(
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
  
-    # prevent duplicate weekday entry
-    existing = db.query(DoctorAvailability).filter(
-        DoctorAvailability.doctor_id == doctor_id,
-        DoctorAvailability.weekday == payload.weekday,
-        DoctorAvailability.is_active == True
-    ).first()
- 
-    if existing:
+
+    if payload.start_time >= payload.end_time:
         raise HTTPException(
             status_code=400,
-            detail=f"Availability for {payload.weekday} already exists"
+            detail="start_time must be before end_time"
         )
- 
+    overlap = db.query(DoctorAvailability).filter(
+        DoctorAvailability.doctor_id == doctor_id,
+        DoctorAvailability.weekday == payload.weekday,
+        DoctorAvailability.is_active == True,
+        DoctorAvailability.start_time < payload.end_time,
+        DoctorAvailability.end_time > payload.start_time
+    ).first()
+
+    if overlap:
+        raise HTTPException(
+            status_code=400,
+            detail="Availability overlaps with existing schedule"
+        )
+    
     availability = DoctorAvailability(
         doctor_id=doctor_id,
         weekday=payload.weekday,
