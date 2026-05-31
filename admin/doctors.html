@@ -261,9 +261,9 @@ tailwind.config = {
       <div class="bg-purple-50 rounded-2xl p-4 border border-purple-100">
         <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider mb-3">Add Day</div>
 
-        <!-- weekday chips -->
+        <!-- weekday chips — multi select -->
         <div class="mb-3">
-          <label class="field-label">Weekday</label>
+          <label class="field-label">Weekdays <span class="text-purple-300 font-normal normal-case">(select multiple)</span></label>
           <div class="flex flex-wrap gap-2 mt-1">
             <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Monday">Mon</span>
             <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Tuesday">Tue</span>
@@ -272,6 +272,13 @@ tailwind.config = {
             <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Friday">Fri</span>
             <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Saturday">Sat</span>
             <span class="weekday-chip border border-purple-200 bg-white text-purple-600 text-xs font-semibold px-3 py-1.5 rounded-xl" data-day="Sunday">Sun</span>
+          </div>
+          <!-- quick select buttons -->
+          <div class="flex gap-2 mt-2">
+            <button type="button" onclick="selectWeekdays('weekdays')" class="text-[11px] text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition font-medium">Mon–Fri</button>
+            <button type="button" onclick="selectWeekdays('weekend')" class="text-[11px] text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition font-medium">Sat–Sun</button>
+            <button type="button" onclick="selectWeekdays('all')" class="text-[11px] text-purple-600 border border-purple-200 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition font-medium">All</button>
+            <button type="button" onclick="selectWeekdays('none')" class="text-[11px] text-purple-400 border border-purple-100 bg-white hover:bg-purple-50 px-2.5 py-1 rounded-lg transition font-medium">Clear</button>
           </div>
         </div>
 
@@ -356,7 +363,7 @@ tailwind.config = {
 </div>
 
 <script>
-const API = 'https://clinic-booking-chatbot.onrender.com';
+const API = 'http://localhost:8000';
 const COLORS = [
   ['bg-purple-100','text-purple-700'],['bg-green-100','text-green-700'],
   ['bg-pink-100','text-pink-700'],['bg-amber-100','text-amber-700'],
@@ -371,7 +378,6 @@ let allDoctors       = [];
 let currentDrawerMode = null; // 'add' | 'edit'
 let currentDoctorId   = null;
 let currentDrawerTab  = 'info';
-let selectedWeekday   = null;
 let pendingToggleId   = null;
 let pendingToggleActive = null;
 
@@ -489,7 +495,8 @@ function closeDrawer() {
   document.getElementById('drawer').classList.add('translate-x-full');
   document.getElementById('drawer-backdrop').classList.add('hidden');
   document.body.style.overflow = '';
-  selectedWeekday = null;
+  selectedWeekdays = [];
+  document.querySelectorAll('.weekday-chip').forEach(c => c.classList.remove('selected'));
 }
 
 function switchDrawerTab(tab) {
@@ -612,14 +619,38 @@ async function loadAvailability(doctorId) {
   }
 }
 
-// weekday chip selection
+// weekday chip selection — multi select
+let selectedWeekdays = [];
+
 document.querySelectorAll('.weekday-chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('.weekday-chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
-    selectedWeekday = chip.dataset.day;
+    chip.classList.toggle('selected');
+    const day = chip.dataset.day;
+    if(chip.classList.contains('selected')) {
+      if(!selectedWeekdays.includes(day)) selectedWeekdays.push(day);
+    } else {
+      selectedWeekdays = selectedWeekdays.filter(d => d !== day);
+    }
   });
 });
+
+function selectWeekdays(preset) {
+  const weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const weekend  = ['Saturday','Sunday'];
+  const all      = [...weekdays, ...weekend];
+
+  let target = [];
+  if(preset === 'weekdays') target = weekdays;
+  else if(preset === 'weekend') target = weekend;
+  else if(preset === 'all') target = all;
+  else target = [];
+
+  selectedWeekdays = [...target];
+  document.querySelectorAll('.weekday-chip').forEach(chip => {
+    if(target.includes(chip.dataset.day)) chip.classList.add('selected');
+    else chip.classList.remove('selected');
+  });
+}
 
 async function addAvailability() {
   const errEl = document.getElementById('avail-error');
@@ -628,8 +659,8 @@ async function addAvailability() {
   const start = document.getElementById('a-start').value;
   const end   = document.getElementById('a-end').value;
 
-  if(!selectedWeekday || !start || !end) {
-    errEl.textContent = 'Select weekday, start time and end time.';
+  if(!selectedWeekdays.length || !start || !end) {
+    errEl.textContent = 'Select at least one weekday, start time and end time.';
     errEl.classList.remove('hidden'); return;
   }
   if(start >= end) {
@@ -637,25 +668,43 @@ async function addAvailability() {
     errEl.classList.remove('hidden'); return;
   }
 
-  try {
-    const res = await fetch(`${API}/admin/doctors/${currentDoctorId}/availability`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ weekday: selectedWeekday, start_time: start+':00', end_time: end+':00' })
-    });
-    if(!res.ok) { const e = await res.json(); throw new Error(e.detail||'Failed'); }
+  const addBtn = document.querySelector('[onclick="addAvailability()"]');
+  addBtn.disabled = true;
+  addBtn.textContent = 'Adding…';
 
-    // reset
-    selectedWeekday = null;
-    document.querySelectorAll('.weekday-chip').forEach(c => c.classList.remove('selected'));
-    document.getElementById('a-start').value = '';
-    document.getElementById('a-end').value   = '';
-    loadAvailability(currentDoctorId);
-    await loadDoctors();
-  } catch(err) {
-    errEl.textContent = err.message;
+  const errors = [];
+
+  for(const day of selectedWeekdays) {
+    try {
+      const res = await fetch(`${API}/admin/doctors/${currentDoctorId}/availability`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ weekday: day, start_time: start+':00', end_time: end+':00' })
+      });
+      if(!res.ok) {
+        const e = await res.json();
+        errors.push(`${day}: ${e.detail||'Failed'}`);
+      }
+    } catch(err) {
+      errors.push(`${day}: Network error`);
+    }
+  }
+
+  addBtn.disabled = false;
+  addBtn.textContent = '+ Add Days';
+
+  if(errors.length) {
+    errEl.textContent = errors.join(' | ');
     errEl.classList.remove('hidden');
   }
+
+  // reset even if partial errors
+  selectedWeekdays = [];
+  document.querySelectorAll('.weekday-chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('a-start').value = '';
+  document.getElementById('a-end').value   = '';
+  loadAvailability(currentDoctorId);
+  await loadDoctors();
 }
 
 async function deleteAvailability(availId) {
