@@ -179,17 +179,17 @@ tailwind.config = {
   </div>
 
   <!-- tabs — only show on edit mode -->
-  <div id="drawer-tabs" style="display:none" class="px-6 pt-4 pb-0 gap-2 flex-shrink-0">
+  <div id="drawer-tabs" style="display:none;gap:8px;padding:16px 24px 0;flex-shrink:0">
     <button id="tab-info" onclick="switchDrawerTab('info')"
-      class="tab-btn active flex-1 text-xs font-semibold py-2 rounded-xl border border-purple-200 text-white">
+      style="flex:1;font-size:12px;font-weight:600;padding:8px;border-radius:12px;border:1.5px solid #d4ccff;cursor:pointer;transition:all 0.15s">
       Doctor Info
     </button>
     <button id="tab-avail" onclick="switchDrawerTab('avail')"
-      class="tab-btn flex-1 text-xs font-semibold py-2 rounded-xl border border-purple-200 text-purple-500 hover:bg-purple-50">
+      style="flex:1;font-size:12px;font-weight:600;padding:8px;border-radius:12px;border:1.5px solid #d4ccff;cursor:pointer;transition:all 0.15s">
       Availability
     </button>
     <button id="tab-leave" onclick="switchDrawerTab('leave')"
-      class="tab-btn flex-1 text-xs font-semibold py-2 rounded-xl border border-purple-200 text-purple-500 hover:bg-purple-50">
+      style="flex:1;font-size:12px;font-weight:600;padding:8px;border-radius:12px;border:1.5px solid #d4ccff;cursor:pointer;transition:all 0.15s">
       🏖️ Leave
     </button>
   </div>
@@ -197,7 +197,7 @@ tailwind.config = {
   <div class="flex-1 overflow-y-auto px-6 py-5">
 
     <!-- ── INFO FORM ── -->
-    <div id="panel-info">
+    <div id="panel-info" style="display:block">
       <div class="grid grid-cols-1 gap-4">
         <div>
           <label class="field-label">Full Name <span class="text-red-400">*</span></label>
@@ -247,7 +247,7 @@ tailwind.config = {
     </div>
 
     <!-- ── AVAILABILITY PANEL ── -->
-    <div id="panel-avail" class="hidden">
+    <div id="panel-avail" style="display:none">
 
       <!-- existing availability -->
       <div class="mb-5">
@@ -297,7 +297,7 @@ tailwind.config = {
     </div>
 
     <!-- ── LEAVE PANEL ── -->
-    <div id="panel-leave" class="hidden">
+    <div id="panel-leave" style="display:none">
 
       <div class="mb-5">
         <div class="text-[11px] font-semibold text-purple-400 uppercase tracking-wider mb-3">Upcoming Leaves</div>
@@ -356,7 +356,7 @@ tailwind.config = {
 </div>
 
 <script>
-const API = 'https://clinic-booking-chatbot.onrender.com';
+const API = 'http://localhost:8000';
 const COLORS = [
   ['bg-purple-100','text-purple-700'],['bg-green-100','text-green-700'],
   ['bg-pink-100','text-pink-700'],['bg-amber-100','text-amber-700'],
@@ -494,17 +494,28 @@ function closeDrawer() {
 
 function switchDrawerTab(tab) {
   currentDrawerTab = tab;
-  document.getElementById('panel-info').classList.toggle('hidden',  tab !== 'info');
-  document.getElementById('panel-avail').classList.toggle('hidden', tab !== 'avail');
-  document.getElementById('panel-leave').classList.toggle('hidden', tab !== 'leave');
-  document.getElementById('tab-info').classList.toggle('active',  tab === 'info');
-  document.getElementById('tab-avail').classList.toggle('active', tab === 'avail');
-  document.getElementById('tab-leave').classList.toggle('active', tab === 'leave');
-  document.getElementById('tab-info').classList.toggle('text-purple-500',  tab !== 'info');
-  document.getElementById('tab-avail').classList.toggle('text-purple-500', tab !== 'avail');
-  document.getElementById('tab-leave').classList.toggle('text-purple-500', tab !== 'leave');
+
+  // panels
+  document.getElementById('panel-info').style.display  = tab === 'info'  ? 'block' : 'none';
+  document.getElementById('panel-avail').style.display = tab === 'avail' ? 'block' : 'none';
+  document.getElementById('panel-leave').style.display = tab === 'leave' ? 'block' : 'none';
+
+  // tab buttons styling
+  ['info','avail','leave'].forEach(t => {
+    const btn = document.getElementById('tab-' + t);
+    if(t === tab) {
+      btn.style.background = 'linear-gradient(135deg, #5340c0, #3d2b96)';
+      btn.style.color      = 'white';
+      btn.style.borderColor = '#3d2b96';
+    } else {
+      btn.style.background = 'white';
+      btn.style.color      = '#8b7ce8';
+      btn.style.borderColor = '#d4ccff';
+    }
+  });
+
   // hide save btn on avail/leave tabs
-  document.getElementById('submit-btn').classList.toggle('hidden', tab === 'avail' || tab === 'leave');
+  document.getElementById('submit-btn').style.display = (tab === 'avail' || tab === 'leave') ? 'none' : 'block';
 
   if(tab === 'avail' && currentDoctorId) loadAvailability(currentDoctorId);
   if(tab === 'leave' && currentDoctorId) loadLeaves(currentDoctorId);

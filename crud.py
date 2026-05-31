@@ -1,5 +1,5 @@
 from models import Doctor, DoctorSlot
-
+from datetime import date, datetime, time
 
 # =========================
 # FETCH SPECIALIZATIONS
@@ -43,9 +43,18 @@ def get_available_dates(db, doctor_id):
 # GET AVAILABLE SLOTS FOR THE SELECTED DOCTOR AND DATE
 # =========================
 def get_available_slots(db, doctor_id, slot_date):
-
-    return db.query(DoctorSlot).filter(
+ 
+    
+ 
+    query = db.query(DoctorSlot).filter(
         DoctorSlot.doctor_id == doctor_id,
         DoctorSlot.slot_date == slot_date,
-        DoctorSlot.status == "available"
-    ).all()
+        DoctorSlot.status    == "available"
+    )
+ 
+    # if today — filter out slots that already passed
+    if slot_date == date.today():
+        now = datetime.now().time()
+        query = query.filter(DoctorSlot.start_time > now)
+ 
+    return query.order_by(DoctorSlot.start_time).all()

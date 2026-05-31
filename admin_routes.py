@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, time, timedelta, datetime
-
+from messaging import send_reply
 from database import SessionLocal
 from models import User, Doctor, DoctorSlot, DoctorAvailability, Appointment,DoctorLeave
 
@@ -230,7 +230,6 @@ def get_all_appointments(
 
     return result
 
-
 # =========================
 # APPOINTMENTS — CANCEL
 # =========================
@@ -239,6 +238,7 @@ def cancel_appointment(
     appointment_id: int,
     db: Session = Depends(get_db)
 ):
+    
 
     appointment = db.query(Appointment).filter(
         Appointment.id == appointment_id
@@ -260,16 +260,38 @@ def cancel_appointment(
     slot = db.query(DoctorSlot).filter(
         DoctorSlot.id == appointment.slot_id
     ).first()
-
     if slot:
         slot.status = "available"
 
     appointment.status = "cancelled"
 
+    # notify patient
+    patient = db.query(User).filter(
+        User.id == appointment.user_id
+    ).first()
+
+    doctor = db.query(Doctor).filter(
+        Doctor.id == appointment.doctor_id
+    ).first()
+
+    if patient and slot and doctor:
+        formatted_date = appointment.appointment_date.strftime("%d %B %Y")
+        start_time     = slot.start_time.strftime("%I:%M %p")
+        msg = (
+            f"Dear {patient.name},\n\n"
+            f"Your appointment with Dr. {doctor.name} "
+            f"on {formatted_date} at {start_time} has been cancelled by the clinic.\n\n"
+            f"We apologise for the inconvenience. "
+            f"Reply *hi* to rebook."
+        )
+        try:
+            send_reply(patient.phone_number, msg)
+        except Exception:
+            pass
+
     db.commit()
 
     return {"message": "Appointment cancelled successfully"}
-
 
 # =========================
 # DOCTORS — LIST
