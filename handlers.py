@@ -5,6 +5,7 @@ from crud import (
     get_doctors_by_specialization,
     get_available_dates,
     get_available_slots,
+    get_available_sessions
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
 from messaging import display_menu
@@ -563,11 +564,13 @@ def process_message(user_number, incoming_msg, db):
 
                 selected_date = available_dates[selected_index]
                 session.selected_date = selected_date
-                session.current_step = "selecting_slot"
+                session.current_step = "selecting_session"
                 db.commit()
 
-                slots = get_available_slots(
-                    db, session.selected_doctor_id, selected_date
+                sessions = get_available_sessions(
+                    db,
+                    session.selected_doctor_id,
+                    selected_date
                 )
 
                 slot_text = ""
@@ -951,3 +954,5 @@ def process_message(user_number, incoming_msg, db):
         )
 
     return reply
+
+

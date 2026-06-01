@@ -54,6 +54,11 @@ class UserSession(Base):
         default="idle"
     )
 
+    selected_session = Column(
+        Integer,
+        nullable=True
+    )
+
     temp_name = Column(String, nullable=True)
     temp_email = Column(String, nullable=True)
     temp_gender = Column(String, nullable=True)

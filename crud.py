@@ -29,16 +29,18 @@ def get_doctors_by_specialization(db, specialization):
 # =========================
 def get_available_dates(db, doctor_id):
 
-    slots = db.query(
-        DoctorSlot.slot_date
-    ).filter(
-        DoctorSlot.doctor_id == doctor_id,
-        DoctorSlot.status == "available"
-    ).distinct().all()
+    slots = (
+        db.query(DoctorSlot.slot_date)
+        .filter(
+            DoctorSlot.doctor_id == doctor_id,
+            DoctorSlot.status == "available"
+        )
+        .distinct()
+        .order_by(DoctorSlot.slot_date)
+        .all()
+    )
 
     return [slot[0] for slot in slots]
-
-
 # =========================
 # GET AVAILABLE SLOTS FOR THE SELECTED DOCTOR AND DATE
 # =========================
@@ -58,3 +60,46 @@ def get_available_slots(db, doctor_id, slot_date):
         query = query.filter(DoctorSlot.start_time > now)
  
     return query.order_by(DoctorSlot.start_time).all()
+
+
+# =========================
+# GET AVAILABLE SESSIONS
+# =========================
+def get_available_sessions(
+    db,
+    doctor_id,
+    slot_date
+):
+    slots = get_available_slots(
+        db,
+        doctor_id,
+        slot_date
+    )
+
+    if not slots:
+        return []
+
+    sessions = []
+
+    current_start = slots[0].start_time
+    previous_end = slots[0].end_time
+
+    for slot in slots[1:]:
+
+        if slot.start_time != previous_end:
+
+            sessions.append({
+                "start": current_start,
+                "end": previous_end
+            })
+
+            current_start = slot.start_time
+
+        previous_end = slot.end_time
+
+    sessions.append({
+        "start": current_start,
+        "end": previous_end
+    })
+
+    return sessions
