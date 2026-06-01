@@ -27,20 +27,51 @@ def get_doctors_by_specialization(db, specialization):
 # =========================
 # GET AVAILABLE DATES FOR THE SELECTED DOCTOR
 # =========================
+from datetime import date, datetime
+
 def get_available_dates(db, doctor_id):
 
-    slots = (
-        db.query(DoctorSlot.slot_date)
-        .filter(
-            DoctorSlot.doctor_id == doctor_id,
-            DoctorSlot.status == "available"
-        )
-        .distinct()
-        .order_by(DoctorSlot.slot_date)
-        .all()
+    query = db.query(
+        DoctorSlot.slot_date
+    ).filter(
+        DoctorSlot.doctor_id == doctor_id,
+        DoctorSlot.status == "available"
     )
 
-    return [slot[0] for slot in slots]
+    today = date.today()
+    now = datetime.now().time()
+
+    dates = []
+
+    distinct_dates = query.distinct().all()
+
+    for row in distinct_dates:
+
+        slot_date = row[0]
+
+        # Future dates are always valid
+        if slot_date > today:
+            dates.append(slot_date)
+            continue
+
+        # Past dates should never appear
+        if slot_date < today:
+            continue
+
+        # Today: check if any future slot exists
+        future_slot_exists = db.query(
+            DoctorSlot.id
+        ).filter(
+            DoctorSlot.doctor_id == doctor_id,
+            DoctorSlot.slot_date == today,
+            DoctorSlot.status == "available",
+            DoctorSlot.start_time > now
+        ).first()
+
+        if future_slot_exists:
+            dates.append(slot_date)
+
+    return sorted(dates)
 # =========================
 # GET AVAILABLE SLOTS FOR THE SELECTED DOCTOR AND DATE
 # =========================
