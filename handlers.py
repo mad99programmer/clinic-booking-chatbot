@@ -140,6 +140,7 @@ def process_message(user_number, incoming_msg, db):
             session.selected_doctor_id    = None
             session.selected_slot_id      = None
             session.selected_date         = None
+            session.selected_session      = None
 
             db.commit()
 
@@ -596,7 +597,14 @@ def process_message(user_number, incoming_msg, db):
     # =========================
     # HANDLE SESSIONS SELECTION
     # =========================
+
     elif session and session.current_step == "selecting_session":
+
+        sessions = get_available_sessions(
+            db,
+            session.selected_doctor_id,
+            session.selected_date
+        )
 
         if not normalized_msg.isdigit():
 
@@ -604,14 +612,68 @@ def process_message(user_number, incoming_msg, db):
 
         else:
 
-            session.selected_session = int(normalized_msg) - 1
+            selected_index = int(normalized_msg) - 1
 
-            db.commit()
+            if (
+                selected_index < 0
+                or selected_index >= len(sessions)
+            ):
 
-            reply = (
-                f"You selected session "
-                f"{session.selected_session + 1}"
-            )
+                reply = "Invalid session selection."
+
+            else:
+
+                session.selected_session = selected_index
+                session.current_step = "selecting_slot"
+
+                db.commit()
+
+                selected_session = sessions[
+                    selected_index
+                ]
+
+                all_slots = get_available_slots(
+                    db,
+                    session.selected_doctor_id,
+                    session.selected_date
+                )
+
+                slots = []
+
+                for slot in all_slots:
+
+                    if (
+                        slot.start_time >= selected_session["start"]
+                        and
+                        slot.end_time <= selected_session["end"]
+                    ):
+                        slots.append(slot)
+
+                slot_text = ""
+
+                for index, slot in enumerate(
+                    slots,
+                    start=1
+                ):
+
+                    start_time = slot.start_time.strftime(
+                        "%I:%M %p"
+                    )
+
+                    end_time = slot.end_time.strftime(
+                        "%I:%M %p"
+                    )
+
+                    slot_text += (
+                        f"{index}️⃣ "
+                        f"{start_time} - "
+                        f"{end_time}\n"
+                    )
+
+                reply = (
+                    f"Available slots:\n\n"
+                    f"{slot_text}"
+                )
 
 
 
@@ -620,11 +682,32 @@ def process_message(user_number, incoming_msg, db):
     # =========================
     elif session and session.current_step == "selecting_slot":
 
-        slots = get_available_slots(
+        sessions = get_available_sessions(
             db,
             session.selected_doctor_id,
             session.selected_date
         )
+
+        selected_session = sessions[
+            session.selected_session
+        ]
+
+        all_slots = get_available_slots(
+            db,
+            session.selected_doctor_id,
+            session.selected_date
+        )
+
+        slots = []
+
+        for slot in all_slots:
+
+            if (
+                slot.start_time >= selected_session["start"]
+                and
+                slot.end_time <= selected_session["end"]
+            ):
+                slots.append(slot)
 
         if not normalized_msg.isdigit():
 
@@ -674,7 +757,7 @@ def process_message(user_number, incoming_msg, db):
                     session.selected_specialization = None
                     session.selected_doctor_id      = None
                     session.selected_date           = None
-
+                    session.selected_session = None
                     db.commit()
 
                     doctor = db.query(Doctor).filter(
