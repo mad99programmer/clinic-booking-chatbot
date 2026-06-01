@@ -573,18 +573,19 @@ def process_message(user_number, incoming_msg, db):
                     selected_date
                 )
 
-                slot_text = ""
+                session_text = ""
 
-                for index, slot in enumerate(slots, start=1):
 
-                    start_time = slot.start_time.strftime("%I:%M %p")
-                    end_time   = slot.end_time.strftime("%I:%M %p")
+                for index, session_data in enumerate(sessions, start=1):
 
-                    slot_text += (
+                    start_time = session_data.start_time.strftime("%I:%M %p")
+                    end_time   = session_data.end_time.strftime("%I:%M %p")
+
+                    session_text += (
                         f"{index}️⃣ {start_time} - {end_time}\n"
                     )
 
-                reply = f"Available slots:\n\n{slot_text}"
+                reply = f"Available slots:\n\n{session_text}"
 
     # =========================
     # HANDLE SLOT SELECTION
