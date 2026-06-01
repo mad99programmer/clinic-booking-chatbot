@@ -587,7 +587,33 @@ def process_message(user_number, incoming_msg, db):
                         f"{index}️⃣ {start_time} - {end_time}\n"
                     )
 
-                reply = f"Available slots:\n\n{session_text}"
+                reply = (
+                    f"📅 {selected_date.strftime('%d %B %Y')}\n\n"
+                    f"Choose a session:\n\n"
+                    f"{session_text}"
+                )
+
+    # =========================
+    # HANDLE SESSIONS SELECTION
+    # =========================
+    elif session and session.current_step == "selecting_session":
+
+        if not normalized_msg.isdigit():
+
+            reply = "Please enter a valid session number."
+
+        else:
+
+            session.selected_session = int(normalized_msg) - 1
+
+            db.commit()
+
+            reply = (
+                f"You selected session "
+                f"{session.selected_session + 1}"
+            )
+
+
 
     # =========================
     # HANDLE SLOT SELECTION
