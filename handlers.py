@@ -578,8 +578,10 @@ def process_message(user_number, incoming_msg, db):
 
                 for index, session_data in enumerate(sessions, start=1):
 
-                    start_time = session_data.start_time.strftime("%I:%M %p")
-                    end_time   = session_data.end_time.strftime("%I:%M %p")
+                    
+                    start_time = session_data["start"].strftime("%I:%M %p")
+                    end_time = session_data["end"].strftime("%I:%M %p")
+                    
 
                     session_text += (
                         f"{index}️⃣ {start_time} - {end_time}\n"
