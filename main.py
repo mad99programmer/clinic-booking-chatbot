@@ -45,7 +45,7 @@ async def health_check():
 # TWILIO WEBHOOK
 # =========================
 @app.post("/webhook")
-async def webhook(
+async def webhook_twilio(
     From: str = Form(...),
     Body: str = Form(...),
     db: Session = Depends(get_db)
@@ -71,7 +71,7 @@ async def webhook(
 # Zernio WEBHOOK
 # =========================
 @app.post("/webhook/zernio")
-async def webhook(request: Request, db: Session = Depends(get_db)):
+async def webhook_zernio(request: Request, db: Session = Depends(get_db)):
     payload = await request.json()
 
     print("RAW PAYLOAD:", payload)
