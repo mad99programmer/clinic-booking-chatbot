@@ -15,3 +15,9 @@ FROM_NUMBER = "whatsapp:+14155238886"
 TEST_MODE = False
  
 client = Client(ACCOUNT_SID, AUTH_TOKEN)
+
+
+# =========================
+# ZERNIO CONFIG
+# =========================
+ZERNIO_API_KEY = os.getenv("ZERNIO_API_KEY")

@@ -1,5 +1,5 @@
-from config import client, FROM_NUMBER, TEST_MODE
-
+from config import client, FROM_NUMBER, TEST_MODE, ZERNIO_API_KEY
+import requests
 
 # =========================
 # DISPLAY MENU
@@ -16,9 +16,9 @@ def display_menu():
     )
 
 # =========================
-# SEND WHATSAPP MESSAGE
+# SEND WHATSAPP MESSAGE using TWILIO
 # =========================
-def send_reply(to: str, message: str):
+def send_reply_twilio(to: str, message: str):
 
     if TEST_MODE:
 
@@ -32,3 +32,24 @@ def send_reply(to: str, message: str):
             to=f"whatsapp:{to}",
             body=message
         )
+# =========================
+# SEND WHATSAPP MESSAGE using ZERNIO
+# =========================
+
+def send_reply(conversation_id: str, account_id: str, message: str):
+    if TEST_MODE:
+        print("\nBOT REPLY:")
+        print(message)
+    else:
+        r = requests.post(
+            f"https://zernio.com/api/v1/inbox/conversations/{conversation_id}/messages",
+            headers={
+                "Authorization": f"Bearer {ZERNIO_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "accountId": account_id,
+                "message": message
+            }
+        )
+        print(f"Reply status: {r.status_code}, Response: {r.text}")

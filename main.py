@@ -1,6 +1,5 @@
-from fastapi import FastAPI, Form, Depends
+from fastapi import FastAPI, Form, Depends, Request
 from sqlalchemy.orm import Session
-
 from database import engine, SessionLocal
 from models import Base
 from handlers import process_message
@@ -67,6 +66,31 @@ async def webhook(
     return {
         "status": "ok"
     }
+
+# =========================
+# Zernio WEBHOOK
+# =========================
+@app.post("/webhook/zernio")
+async def webhook_zernio(request: Request, db: Session = Depends(get_db)):
+    payload = await request.json()
+
+    print("RAW PAYLOAD:", payload)
+
+    if payload.get("event") == "message.received":
+        message = payload.get("message", {})
+        account = payload.get("account", {})
+
+        user_number = message.get("sender", {}).get("phoneNumber")
+        incoming_msg = message.get("text", "").strip()
+        conversation_id = message.get("conversationId")
+        account_id = account.get("id")
+
+        reply = process_message(user_number, incoming_msg, db)
+        send_reply(conversation_id, account_id, reply)
+
+    return {"status": "ok"}
+
+
 
 
 # =========================
