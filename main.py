@@ -6,7 +6,7 @@ from handlers import process_message
 from messaging import send_reply
 from fastapi.staticfiles import StaticFiles
 from admin_routes import router as admin_router
-
+from auth_routes import router as auth_router
 # =========================
 # CREATE TABLES
 # =========================
@@ -41,6 +41,7 @@ finally:
 app = FastAPI()
 
 app.include_router(admin_router)
+app.include_router(auth_router)
 app.mount("/admin", StaticFiles(directory="admin", html=True), name="admin")
 # =========================
 # DATABASE SESSION
