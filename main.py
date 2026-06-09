@@ -12,6 +12,32 @@ from admin_routes import router as admin_router
 # =========================
 Base.metadata.create_all(bind=engine)
 
+
+#temporary admin creation
+
+
+from models import Admin
+from security import hash_password
+
+db = SessionLocal()
+
+try:
+    admin = db.query(Admin).filter(
+        Admin.username == "admin"
+    ).first()
+
+    if not admin:
+        admin = Admin(
+            username="admin",
+            password_hash=hash_password("Admin@123")
+        )
+
+        db.add(admin)
+        db.commit()
+
+finally:
+    db.close()
+
 app = FastAPI()
 
 app.include_router(admin_router)
