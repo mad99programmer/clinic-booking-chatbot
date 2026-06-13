@@ -7,6 +7,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
+
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "login.html";
+}
 tailwind.config = {
   theme: {
     extend: {

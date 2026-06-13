@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clinic Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-purple-50 min-h-screen flex items-center justify-center">
+
+<div class="bg-white p-8 rounded-2xl shadow-lg w-96">
+
+    <h1 class="text-2xl font-bold text-center mb-6">
+        Clinic Admin Login
+    </h1>
+
+    <input
+        id="username"
+        type="text"
+        placeholder="Username"
+        class="w-full border p-3 rounded-lg mb-4"
+    >
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+        class="w-full border p-3 rounded-lg mb-4"
+    >
+
+    <button
+        onclick="login()"
+        class="w-full bg-purple-700 text-white p-3 rounded-lg"
+    >
+        Login
+    </button>
+
+    <p id="error" class="text-red-500 mt-3 text-sm"></p>
+
+</div>
+
+<script>
+
+const API =
+"https://clinic-booking-chatbot.onrender.com";
+
+async function login() {
+
+    const username =
+        document.getElementById("username").value;
+
+    const password =
+        document.getElementById("password").value;
+
+    const res = await fetch(
+        `${API}/auth/login`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+        }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+
+        localStorage.setItem(
+            "token",
+            data.access_token
+        );
+
+        window.location.href =
+            "dashboard.html";
+    }
+    else {
+
+        document.getElementById("error")
+            .innerText =
+            "Invalid credentials";
+    }
+}
+
+</script>
+
+</body>
+</html>
