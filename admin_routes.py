@@ -129,7 +129,7 @@ def get_stats(current_admin = Depends(get_current_admin),db: Session = Depends(g
 # DASHBOARD — TODAY'S APPOINTMENTS
 # =========================
 @router.get("/appointments/today")
-def get_today_appointments(db: Session = Depends(get_db)):
+def get_today_appointments(current_admin = Depends(get_current_admin),db: Session = Depends(get_db)):
 
     today = date.today()
 
@@ -178,6 +178,7 @@ def get_all_appointments(
     status:    Optional[str]  = None,
     from_date: Optional[date] = None,
     to_date:   Optional[date] = None,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -237,6 +238,7 @@ def get_all_appointments(
 @router.put("/appointments/{appointment_id}/cancel")
 def cancel_appointment(
     appointment_id: int,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     
@@ -298,7 +300,7 @@ def cancel_appointment(
 # DOCTORS — LIST
 # =========================
 @router.get("/doctors")
-def get_doctors(db: Session = Depends(get_db)):
+def get_doctors(current_admin = Depends(get_current_admin),db: Session = Depends(get_db)):
 
     doctors = db.query(Doctor).all()
 
@@ -340,6 +342,7 @@ def get_doctors(db: Session = Depends(get_db)):
 @router.post("/doctors")
 def add_doctor(
     payload: DoctorCreate,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -372,6 +375,7 @@ def add_doctor(
 def update_doctor(
     doctor_id: int,
     payload: DoctorUpdate,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -408,6 +412,7 @@ def get_slots(
     doctor_id: Optional[int]  = None,
     slot_date: Optional[date] = None,
     status:    Optional[str]  = None,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -455,6 +460,7 @@ def get_slots(
 @router.post("/slots")
 def add_slot(
     payload: SlotCreate,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -499,6 +505,7 @@ def add_slot(
 @router.post("/slots/bulk")
 def add_slots_bulk(
     payload: SlotBulkCreate,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -568,6 +575,7 @@ def add_slots_bulk(
 @router.delete("/slots/{slot_id}")
 def delete_slot(
     slot_id: int,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
 
@@ -597,7 +605,7 @@ def delete_slot(
 # PATIENTS — LIST
 # =========================
 @router.get("/patients")
-def get_patients(db: Session = Depends(get_db)):
+def get_patients(current_admin = Depends(get_current_admin),db: Session = Depends(get_db)):
 
     patients = db.query(User).all()
 
@@ -638,6 +646,7 @@ def get_patients(db: Session = Depends(get_db)):
 @router.get("/doctors/{doctor_id}/availability")
 def get_doctor_availability(
     doctor_id: int,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
@@ -667,6 +676,7 @@ def get_doctor_availability(
 def add_doctor_availability(
     doctor_id: int,
     payload: AvailabilityCreate,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
@@ -717,6 +727,7 @@ def add_doctor_availability(
 @router.delete("/availability/{availability_id}")
 def delete_availability(
     availability_id: int,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     availability = db.query(DoctorAvailability).filter(
@@ -738,6 +749,7 @@ def delete_availability(
 @router.get("/doctors/{doctor_id}/leave")
 def get_doctor_leaves(
     doctor_id: int,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
@@ -768,6 +780,7 @@ def get_doctor_leaves(
 def mark_leave(
     doctor_id: int,
     payload: LeaveCreate,
+    current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
     from messaging import send_reply
