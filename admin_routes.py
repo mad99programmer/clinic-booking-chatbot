@@ -10,7 +10,8 @@ from datetime import date, time, timedelta, datetime
 from messaging import send_reply
 from database import SessionLocal
 from models import User, Doctor, DoctorSlot, DoctorAvailability, Appointment,DoctorLeave
-
+from security import get_current_admin
+from fastapi import Depends
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -94,7 +95,7 @@ class LeaveCreate(BaseModel):
 # DASHBOARD — STATS
 # =========================
 @router.get("/stats")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(current_admin = Depends(get_current_admin),db: Session = Depends(get_db)):
 
     today = date.today()
 
