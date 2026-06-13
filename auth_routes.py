@@ -3,7 +3,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Admin
-from security import verify_password
+from security import (
+    verify_password,
+    create_access_token
+)
 
 
 router = APIRouter(
@@ -58,6 +61,15 @@ def login(
             detail="Invalid username or password"
         )
 
+    token = create_access_token({
+        "admin_id": admin.id,
+        "username": admin.username
+    })
+
     return {
-        "message": "Login successful"
+        "access_token": token,
+        "token_type": "bearer"
     }
+
+
+    
