@@ -6,14 +6,12 @@
 <title>City Clinic — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
+
 <script>
-
-const token = localStorage.getItem("token");
-
-if (!token) {
-    window.location.href = "login.html";
-}
-
 tailwind.config = {
   theme: {
     extend: {
@@ -323,7 +321,7 @@ tailwind.config = {
 </div>
 
 <script>
-const API = 'https://clinic-booking-chatbot.onrender.com';
+
 
 // ── avatar colors ──
 const COLORS = [
@@ -382,8 +380,8 @@ function animateCount(id, target) {
 // ── load stats ──
 async function loadStats() {
   try {
-    const res  = await fetch(`${API}/admin/stats`);
-    const d    = await res.json();
+    const d = await apiGet("/admin/stats");
+    if (!d) return;
     animateCount('stat-doctors',  d.total_doctors);
     animateCount('stat-slots',    d.open_slots);
     animateCount('stat-patients', d.total_patients);
@@ -406,8 +404,12 @@ async function loadStats() {
 async function loadTodayAppointments() {
   const tbody = document.getElementById('appointments-tbody');
   try {
-    const res  = await fetch(`${API}/admin/appointments/today`);
-    const data = await res.json();
+    const data =
+    await apiGet(
+        "/admin/appointments/today"
+    );
+
+    if (!data) return;
 
     if(!data.length) {
       tbody.innerHTML = '';
@@ -458,7 +460,11 @@ async function cancelAppt(id, btn) {
   if(!confirm('Cancel this appointment?')) return;
   btn.disabled = true; btn.textContent = '…';
   try {
-    const res = await fetch(`${API}/admin/appointments/${id}/cancel`, { method:'PUT' });
+    const res =
+    await apiPut(
+        `/admin/appointments/${id}/cancel`
+    );
+
     if(res.ok) { loadTodayAppointments(); loadStats(); }
     else { const e = await res.json(); alert(e.detail || 'Failed'); btn.disabled=false; btn.textContent='Cancel'; }
   } catch(e) { alert('Network error'); btn.disabled=false; btn.textContent='Cancel'; }
@@ -468,8 +474,8 @@ async function cancelAppt(id, btn) {
 async function loadDoctors() {
   const list = document.getElementById('doctors-list');
   try {
-    const res  = await fetch(`${API}/admin/doctors`);
-    const data = await res.json();
+    const data = await apiGet("/admin/doctors");
+  if (!data) return;
     const active = data.filter(d => d.is_active);
 
     if(!active.length) {
@@ -511,6 +517,7 @@ function closeSidebar() {
 }
 
 // ── init ──
+
 setGreeting();
 loadStats();
 loadTodayAppointments();

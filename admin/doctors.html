@@ -6,6 +6,10 @@
 <title>City Clinic — Doctors</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
 <script>
 tailwind.config = {
   theme: {
@@ -87,7 +91,7 @@ tailwind.config = {
     <a href="#" class="nav-item relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-600 cursor-pointer"><span class="text-base">⚙️</span> Settings</a>
   </nav>
   <div class="px-3 py-4 border-t border-purple-50">
-    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition">
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition" onclick="logout()">
       <div class="w-8 h-8 rounded-full bg-purple-700 grid place-items-center text-sm font-bold text-white flex-shrink-0">A</div>
       <div class="flex-1 min-w-0">
         <div class="text-sm font-semibold text-purple-900 truncate">Admin</div>
@@ -363,7 +367,6 @@ tailwind.config = {
 </div>
 
 <script>
-const API = 'https://clinic-booking-chatbot.onrender.com';
 const COLORS = [
   ['bg-purple-100','text-purple-700'],['bg-green-100','text-green-700'],
   ['bg-pink-100','text-pink-700'],['bg-amber-100','text-amber-700'],
@@ -386,9 +389,9 @@ async function loadDoctors() {
   document.getElementById('empty-state').classList.add('hidden');
   document.getElementById('error-state').classList.add('hidden');
   try {
-    const res  = await fetch(`${API}/admin/doctors`);
-    if(!res.ok) throw new Error();
-    allDoctors = await res.json();
+    const data = await apiGet('/admin/doctors');
+    if (!data) return; // 401 — apiGet already redirected
+    allDoctors = data;
 
     const specs = [...new Set(allDoctors.map(d => d.specialization))].sort();
     const specSel = document.getElementById('filter-spec');
@@ -561,9 +564,12 @@ async function submitForm() {
   btn.textContent = doctorId ? 'Updating…' : 'Saving…';
 
   try {
-    const url    = doctorId ? `${API}/admin/doctors/${doctorId}` : `${API}/admin/doctors`;
-    const method = doctorId ? 'PUT' : 'POST';
-    const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const res = doctorId
+      ? await apiPut(`/admin/doctors/${doctorId}`, payload)
+      : await apiPost('/admin/doctors', payload);
+
+    if (!res) return; // 401 — already redirected
+
     if(!res.ok) { const e = await res.json(); throw new Error(e.detail||'Request failed'); }
 
     // if add — after save, switch to availability tab to set schedule
@@ -595,8 +601,8 @@ async function loadAvailability(doctorId) {
   const list = document.getElementById('avail-list');
   list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">Loading…</div>';
   try {
-    const res  = await fetch(`${API}/admin/doctors/${doctorId}/availability`);
-    const data = await res.json();
+    const data = await apiGet(`/admin/doctors/${doctorId}/availability`);
+    if (!data) return; // 401 — already redirected
 
     if(!data.length) {
       list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">No schedule set yet</div>';
@@ -676,11 +682,10 @@ async function addAvailability() {
 
   for(const day of selectedWeekdays) {
     try {
-      const res = await fetch(`${API}/admin/doctors/${currentDoctorId}/availability`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ weekday: day, start_time: start+':00', end_time: end+':00' })
+      const res = await apiPost(`/admin/doctors/${currentDoctorId}/availability`, {
+        weekday: day, start_time: start+':00', end_time: end+':00'
       });
+      if (!res) { errors.push(`${day}: Session expired`); continue; }
       if(!res.ok) {
         const e = await res.json();
         errors.push(`${day}: ${e.detail||'Failed'}`);
@@ -710,7 +715,8 @@ async function addAvailability() {
 async function deleteAvailability(availId) {
   if(!confirm('Remove this day from schedule?')) return;
   try {
-    const res = await fetch(`${API}/admin/availability/${availId}`, { method:'DELETE' });
+    const res = await apiDelete(`/admin/availability/${availId}`);
+    if (!res) return; // 401 — already redirected
     if(!res.ok) throw new Error();
     loadAvailability(currentDoctorId);
   } catch(e) { alert('Failed to remove'); }
@@ -743,10 +749,8 @@ async function confirmToggle() {
   const btn = document.getElementById('toggle-confirm-btn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    const res = await fetch(`${API}/admin/doctors/${pendingToggleId}`, {
-      method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({is_active: !pendingToggleActive})
-    });
+    const res = await apiPut(`/admin/doctors/${pendingToggleId}`, { is_active: !pendingToggleActive });
+    if (!res) return; // 401 — already redirected
     if(!res.ok) throw new Error();
     closeToggleModal(); await loadDoctors();
   } catch(e) { alert('Failed'); } finally { btn.disabled=false; }
@@ -759,8 +763,8 @@ async function loadLeaves(doctorId) {
   const list = document.getElementById('leave-list');
   list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">Loading…</div>';
   try {
-    const res  = await fetch(`${API}/admin/doctors/${doctorId}/leave`);
-    const data = await res.json();
+    const data = await apiGet(`/admin/doctors/${doctorId}/leave`);
+    if (!data) return; // 401 — already redirected
 
     if(!data.length) {
       list.innerHTML = '<div class="text-purple-300 text-sm text-center py-4">No upcoming leaves</div>';
@@ -818,11 +822,10 @@ async function markLeave() {
   warnEl.dataset.confirmed = '';
 
   try {
-    const res = await fetch(`${API}/admin/doctors/${currentDoctorId}/leave`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ leave_date: leaveDate, reason: reason || null })
+    const res = await apiPost(`/admin/doctors/${currentDoctorId}/leave`, {
+      leave_date: leaveDate, reason: reason || null
     });
+    if (!res) return; // 401 — already redirected
     if(!res.ok) { const e = await res.json(); throw new Error(e.detail||'Failed'); }
     const result = await res.json();
 
@@ -845,7 +848,8 @@ async function markLeave() {
 async function cancelLeave(leaveId) {
   if(!confirm('Cancel this leave? Slots will regenerate on next cron run.')) return;
   try {
-    const res = await fetch(`${API}/admin/leave/${leaveId}`, {method:'DELETE'});
+    const res = await apiDelete(`/admin/leave/${leaveId}`);
+    if (!res) return; // 401 — already redirected
     if(!res.ok) throw new Error();
     loadLeaves(currentDoctorId);
     showToast('✅ Leave cancelled. Slots will regenerate tonight.');

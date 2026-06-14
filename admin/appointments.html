@@ -6,6 +6,10 @@
 <title>City Clinic — Appointments</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
 <script>
 tailwind.config = {
   theme: {
@@ -75,14 +79,6 @@ tailwind.config = {
     appearance: none;
     -webkit-appearance: none;
   }
-
-  /* modal */
-  #modal-backdrop {
-    transition: opacity 0.2s;
-  }
-  #modal-box {
-    transition: transform 0.2s, opacity 0.2s;
-  }
 </style>
 </head>
 <body class="min-h-screen">
@@ -130,7 +126,7 @@ tailwind.config = {
   </nav>
 
   <div class="px-3 py-4 border-t border-purple-50">
-    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition">
+    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 cursor-pointer transition" onclick="logout()">
       <div class="w-8 h-8 rounded-full bg-purple-700 grid place-items-center text-sm font-bold text-white flex-shrink-0">A</div>
       <div class="flex-1 min-w-0">
         <div class="text-sm font-semibold text-purple-900 truncate">Admin</div>
@@ -290,8 +286,6 @@ tailwind.config = {
 </div>
 
 <script>
-const API = 'https://clinic-booking-chatbot.onrender.com';
-
 const COLORS = [
   ['bg-purple-100','text-purple-700'],
   ['bg-green-100','text-green-700'],
@@ -301,7 +295,7 @@ const COLORS = [
   ['bg-indigo-100','text-indigo-700'],
 ];
 function avatarCls(id) { return COLORS[id % COLORS.length]; }
-function initials(name) { return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function initials(name) { return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2); }
 
 function pill(status) {
   const map = {
@@ -317,15 +311,14 @@ function pill(status) {
 }
 
 // ── state ──
-let allAppointments = [];
 let pendingCancelId = null;
 
 // ── load doctors for filter dropdown ──
 async function loadDoctorFilter() {
   try {
-    const res  = await fetch(`${API}/admin/doctors`);
-    const data = await res.json();
-    const sel  = document.getElementById('filter-doctor');
+    const data = await apiGet("/admin/doctors");
+    if (!data) return;
+    const sel = document.getElementById('filter-doctor');
     data.filter(d => d.is_active).forEach(d => {
       const opt = document.createElement('option');
       opt.value = d.id;
@@ -342,10 +335,10 @@ function buildQuery() {
   const status = document.getElementById('filter-status').value;
   const from   = document.getElementById('filter-from').value;
   const to     = document.getElementById('filter-to').value;
-  if(doctor) params.set('doctor_id', doctor);
-  if(status) params.set('status', status);
-  if(from)   params.set('from_date', from);
-  if(to)     params.set('to_date', to);
+  if (doctor) params.set('doctor_id', doctor);
+  if (status) params.set('status', status);
+  if (from)   params.set('from_date', from);
+  if (to)     params.set('to_date', to);
   return params.toString();
 }
 
@@ -358,12 +351,12 @@ function renderFilterPills() {
   const to     = document.getElementById('filter-to').value;
   const pills  = [];
 
-  if(doctor.value) pills.push({ label: doctor.options[doctor.selectedIndex].text, clear: () => { doctor.value=''; applyFilters(); } });
-  if(status.value) pills.push({ label: status.options[status.selectedIndex].text, clear: () => { status.value=''; applyFilters(); } });
-  if(from) pills.push({ label: `From ${from}`, clear: () => { document.getElementById('filter-from').value=''; applyFilters(); } });
-  if(to)   pills.push({ label: `To ${to}`,     clear: () => { document.getElementById('filter-to').value=''; applyFilters(); } });
+  if (doctor.value) pills.push({ label: doctor.options[doctor.selectedIndex].text, clear: () => { doctor.value = ''; applyFilters(); } });
+  if (status.value) pills.push({ label: status.options[status.selectedIndex].text, clear: () => { status.value = ''; applyFilters(); } });
+  if (from) pills.push({ label: `From ${from}`, clear: () => { document.getElementById('filter-from').value = ''; applyFilters(); } });
+  if (to)   pills.push({ label: `To ${to}`,     clear: () => { document.getElementById('filter-to').value = ''; applyFilters(); } });
 
-  container.innerHTML = pills.map((p,i) =>
+  container.innerHTML = pills.map((p, i) =>
     `<span class="inline-flex items-center gap-1.5 bg-purple-100 text-purple-700 text-xs font-medium px-3 py-1 rounded-full cursor-pointer hover:bg-purple-200 transition" data-pill="${i}">
       ${p.label} <span class="text-purple-400 font-bold">×</span>
     </span>`
@@ -390,24 +383,23 @@ async function loadAppointments() {
   renderFilterPills();
 
   try {
-    const qs  = buildQuery();
-    const res = await fetch(`${API}/admin/appointments${qs ? '?'+qs : ''}`);
-    if(!res.ok) throw new Error();
-    allAppointments = await res.json();
+    const qs   = buildQuery();
+    const data = await apiGet(`/admin/appointments${qs ? '?' + qs : ''}`);
+    if (!data) return; // 401 — apiGet already redirected
 
-    const count = allAppointments.length;
+    const count = data.length;
     document.getElementById('total-count').textContent = `${count} record${count !== 1 ? 's' : ''}`;
     document.getElementById('showing-label').textContent = `Showing ${count} appointment${count !== 1 ? 's' : ''}`;
 
-    if(!count) {
+    if (!count) {
       tbody.innerHTML = '';
       document.getElementById('empty-state').classList.remove('hidden');
       return;
     }
 
-    tbody.innerHTML = allAppointments.map(a => {
+    tbody.innerHTML = data.map(a => {
       const [bg, tc] = avatarCls(a.id);
-      const dateStr  = new Date(a.date).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const dateStr  = new Date(a.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
       return `
       <tr class="appt-row border-b border-purple-50 last:border-0">
         <td class="px-6 py-3.5">
@@ -436,7 +428,7 @@ async function loadAppointments() {
         <td class="px-4 py-3.5">${pill(a.status)}</td>
         <td class="px-4 py-3.5">
           ${a.status === 'booked' ? `
-          <button onclick="openModal(${a.id}, '${a.patient_name.replace(/'/g,"\\'")}', '${dateStr} • ${a.time}')"
+          <button onclick="openModal(${a.id}, '${a.patient_name.replace(/'/g, "\\'")}', '${dateStr} • ${a.time}')"
             class="text-[11px] text-red-500 hover:text-red-700 border border-red-200 hover:border-red-300 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition font-medium">
             Cancel
           </button>` : ''}
@@ -477,12 +469,14 @@ function closeModal() {
 }
 
 async function confirmCancel() {
-  if(!pendingCancelId) return;
+  if (!pendingCancelId) return;
   const btn = document.getElementById('modal-confirm-btn');
-  btn.disabled = true; btn.textContent = 'Cancelling…';
+  btn.disabled = true;
+  btn.textContent = 'Cancelling…';
   try {
-    const res = await fetch(`${API}/admin/appointments/${pendingCancelId}/cancel`, { method:'PUT' });
-    if(res.ok) {
+    const res = await apiPut(`/admin/appointments/${pendingCancelId}/cancel`);
+    if (!res) return; // 401 — already redirected by apiPut
+    if (res.ok) {
       closeModal();
       loadAppointments();
     } else {
@@ -492,13 +486,14 @@ async function confirmCancel() {
   } catch(e) {
     alert('Network error');
   } finally {
-    btn.disabled = false; btn.textContent = 'Yes, cancel';
+    btn.disabled = false;
+    btn.textContent = 'Yes, cancel';
   }
 }
 
 // close modal on backdrop click
 document.getElementById('modal-backdrop').addEventListener('click', function(e) {
-  if(e.target === this) closeModal();
+  if (e.target === this) closeModal();
 });
 
 // ── sidebar ──
