@@ -1,0 +1,16 @@
+idle
+  └─ book_appointment
+       ├─ [new user] → collecting_name → collecting_email
+       │                → collecting_gender → collecting_age
+       │                → confirming_details
+       └─ [existing]  → selecting_specialization
+                           ├─ ai_symptom_collection (optional detour)
+                           └─ selecting_specialization
+                                → selecting_doctor
+                                → selecting_date
+                                → selecting_session
+                                → selecting_slot
+                                → confirming_booking ✅
+
+  └─ cancel_appointment
+       → selecting_cancel → confirming_cancel ✅

@@ -32,7 +32,7 @@ async def receive_whatsapp_message(request: Request):
                 "1. Book Appointment\n"
                 "2. Cancel Appointment\n"
                 "3. Clinic Location\n\n"
-                "Please reply with the number of your choice."
+                "Please reply with the number of your choice.haha"
             )
             
             r = requests.post(

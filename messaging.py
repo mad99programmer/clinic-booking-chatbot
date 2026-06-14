@@ -6,13 +6,13 @@ import requests
 # =========================
 def display_menu():
     return (
-        "👋 Welcome to City Clinic!\n\n"
+        "ðŸ‘‹ Welcome to City Clinic!\n\n"
         "Please choose an option:\n\n"
-        "1️⃣ Book Appointment\n"
-        "2️⃣ Cancel Appointment\n"
-        "3️⃣ My Appointments\n"
-        "4️⃣ Clinic Hours\n"
-        "5️⃣ Location"
+        "1ï¸âƒ£ Book Appointment\n"
+        "2ï¸âƒ£ Cancel Appointment\n"
+        "3ï¸âƒ£ My Appointments\n"
+        "4ï¸âƒ£ Clinic Hours\n"
+        "5ï¸âƒ£ Location"
     )
 
 # =========================
@@ -36,20 +36,38 @@ def send_reply_twilio(to: str, message: str):
 # SEND WHATSAPP MESSAGE using ZERNIO
 # =========================
 
-def send_reply(conversation_id: str, account_id: str, message: str):
+def send_reply(conversation_id: str, account_id: str, message):
+    """
+    Send a reply via Zernio.
+
+    ``message`` can be:
+    - str  â†’ plain text message
+    - dict â†’ interactive payload (buttons / list) produced by handlers.py
+              Expected keys: "message" (str), and either "buttons" (list)
+              or "interactive" (dict).
+    """
     if TEST_MODE:
         print("\nBOT REPLY:")
         print(message)
+        return
+
+    if isinstance(message, str):
+        body = {"accountId": account_id, "message": message}
     else:
-        r = requests.post(
-            f"https://zernio.com/api/v1/inbox/conversations/{conversation_id}/messages",
-            headers={
-                "Authorization": f"Bearer {ZERNIO_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "accountId": account_id,
-                "message": message
-            }
-        )
-        print(f"Reply status: {r.status_code}, Response: {r.text}")
+        # Interactive dict from build_*() helpers
+        body = {"accountId": account_id}
+        body["message"] = message.get("message", "")
+        if "buttons" in message:
+            body["buttons"] = message["buttons"]
+        if "interactive" in message:
+            body["interactive"] = message["interactive"]
+
+    r = requests.post(
+        f"https://zernio.com/api/v1/inbox/conversations/{conversation_id}/messages",
+        headers={
+            "Authorization": f"Bearer {ZERNIO_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json=body,
+    )
+    print(f"Reply status: {r.status_code}, Response: {r.text}")
