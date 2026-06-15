@@ -14,3 +14,76 @@ idle
 
   └─ cancel_appointment
        → selecting_cancel → confirming_cancel ✅
+
+
+
+sample data returned when a user sends hi
+
+
+{
+  "id": "5ba31fd1-53a9-4965-a943-734aa3860d2c",
+  "event": "message.received",
+
+  "message": {
+    "id": "6a2ef6e15f7d1751abb22f53",
+
+    "conversationId": "6a1ddd6f9956549faece8ae0",
+
+    "platform": "whatsapp",
+
+    "platformMessageId": "wamid.HBgMOTE5ODMzODUxNjIxFQIAEhggQUMyRTQ2OEMzNTRBOEFDRjdCNTE0RkFFNzFCNjgzOTgA",
+
+    "direction": "incoming",
+
+    "text": "📅 Book Appointmen",
+
+    "attachments": [],
+
+    "sender": {
+      "id": "919833851621",
+      "name": "Mitul",
+      "phoneNumber": "+919833851621",
+      "contactId": "6a1ddd6f9956549faece8af2"
+    },
+
+    "sentAt": "2026-06-14T18:45:50.000Z",
+
+    "isRead": false
+  },
+
+  "conversation": {
+    "id": "6a1ddd6f9956549faece8ae0",
+
+    "platformConversationId": "919833851621",
+
+    "participantId": "919833851621",
+
+    "participantName": "Mitul",
+
+    "participantUsername": "+919833851621",
+
+    "status": "active",
+
+    "contactId": "6a1ddd6f9956549faece8af2"
+  },
+
+  "account": {
+    "id": "6a180a034c7f364ffded3c9c",
+
+    "platform": "whatsapp",
+
+    "username": "+12029087457",
+
+    "displayName": "Zernio Sandbox"
+  },
+
+  "metadata": {
+    "interactiveType": "button_reply",
+
+    "interactiveId": "book_appointment",
+
+    "quotedMessageId": "wamid.HBgMOTE5ODMzODUxNjIxFQIAERgSNTM1MkJFNUMxNTBGRjVENjhCAA=="
+  },
+
+  "timestamp": "2026-06-14T18:45:53.511Z"
+}

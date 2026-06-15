@@ -112,7 +112,7 @@ async def webhook_zernio(request: Request, db: Session = Depends(get_db)):
         conversation_id = message.get("conversationId")
         account_id = account.get("id")
 
-        reply = process_message(user_number, incoming_msg, db, webhook_data=message)
+        reply = process_message(user_number, incoming_msg, db)
         send_reply(conversation_id, account_id, reply)
 
     return {"status": "ok"}
