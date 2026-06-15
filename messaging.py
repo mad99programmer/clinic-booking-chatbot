@@ -36,24 +36,57 @@ def send_reply_twilio(to: str, message: str):
 # SEND WHATSAPP MESSAGE using ZERNIO
 # =========================
 
-def send_reply(conversation_id: str, account_id: str, message: str):
+def send_reply(
+    conversation_id: str,
+    account_id: str,
+    message
+):
     if TEST_MODE:
+
         print("\nBOT REPLY:")
         print(message)
-    else:
-        r = requests.post(
-            f"https://zernio.com/api/v1/inbox/conversations/{conversation_id}/messages",
-            headers={
-                "Authorization": f"Bearer {ZERNIO_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "accountId": account_id,
-                "message": message
-            }
-        )
-        print(f"Reply status: {r.status_code}, Response: {r.text}")
+        return
 
+    if isinstance(message, str):
+
+        body = {
+            "accountId": account_id,
+            "message": message
+        }
+
+    else:
+
+        body = {
+            "accountId": account_id
+        }
+
+        if "message" in message:
+            body["message"] = message["message"]
+
+        if "buttons" in message:
+            body["buttons"] = message["buttons"]
+
+        if "interactive" in message:
+            body["interactive"] = message["interactive"]
+
+    print("OUTGOING BODY:")
+    print(body)
+
+    r = requests.post(
+        f"https://zernio.com/api/v1/inbox/conversations/{conversation_id}/messages",
+        headers={
+            "Authorization": f"Bearer {ZERNIO_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json=body
+    )
+
+    print(
+        f"Reply status: {r.status_code}, "
+        f"Response: {r.text}"
+    )
+
+    
 def build_slot_list_page(
     slots,
     page=0
