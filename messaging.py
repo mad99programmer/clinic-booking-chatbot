@@ -1,6 +1,6 @@
 from config import client, FROM_NUMBER, TEST_MODE, ZERNIO_API_KEY
 import requests
-
+from helpers import paginate_slots
 # =========================
 # DISPLAY MENU
 # =========================
@@ -86,13 +86,24 @@ def send_reply(
         f"Response: {r.text}"
     )
 
-    
-def build_slot_list_page(
+
+def build_slot_list_page(slots,page=0):
+    page_slots = paginate_slots(
     slots,
-    page=0
-):
+    page
+)
+    rows = []
+    for slot in page_slots:
+
+        rows.append(
+            {
+                "id": f"slot_{slot.id}",
+                "title": slot.start_time.strftime(
+                    "%I:%M %p"
+                )
+            }
+        )
     return {
-        "message": "Choose an available slot:",
         "interactive": {
             "type": "list",
             "body": {
@@ -103,16 +114,7 @@ def build_slot_list_page(
                 "sections": [
                     {
                         "title": "Available Slots",
-                        "rows": [
-                            {
-                                "id": "slot_1",
-                                "title": "10:00 AM"
-                            },
-                            {
-                                "id": "slot_2",
-                                "title": "10:15 AM"
-                            }
-                        ]
+                        "rows": rows
                     }
                 ]
             }
