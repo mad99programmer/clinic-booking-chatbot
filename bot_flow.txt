@@ -1,3 +1,4 @@
+https://clinic-booking-chatbot.onrender.com/webhook/zernio
 idle
   └─ book_appointment
        ├─ [new user] → collecting_name → collecting_email

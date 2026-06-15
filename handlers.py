@@ -8,10 +8,10 @@ from crud import (
     get_available_sessions
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import display_menu
+from messaging import display_menu,build_slot_list_page
 from datetime import date
 
-
+from helpers import get_slots_for_selected_session,extract_payload
 MENU_COMMANDS = [
     "hi",
     "hello",
@@ -24,6 +24,7 @@ MENU_COMMANDS = [
     "4",
     "5"
 ]
+
 
 
 # =========================
@@ -106,15 +107,21 @@ def format_appointments(appointments):
 # =========================
 # PROCESS MESSAGE
 # =========================
-def process_message(user_number, incoming_msg, db):
+def process_message(user_number, incoming_msg, db,webhook_data=None):
 
     normalized_msg = incoming_msg.lower().strip()
-
+    interactive_payload = extract_payload(webhook_data)
+    effective_input = interactive_payload or normalized_msg
     reply = (
         "Sorry, I didn't understand that.\n\n"
         "Reply *hi* to see the menu."
     )
-
+    print(
+        "TEXT:",
+        incoming_msg,
+        "PAYLOAD:",
+        interactive_payload
+    )
     # =========================
     # FETCH SESSION
     # =========================
@@ -622,32 +629,13 @@ def process_message(user_number, incoming_msg, db):
                 reply = "Invalid session selection."
 
             else:
-
-                session.selected_session = selected_index
-                session.current_step = "selecting_slot"
-
-                db.commit()
-
-                selected_session = sessions[
-                    selected_index
-                ]
-
-                all_slots = get_available_slots(
+                slots = get_slots_for_selected_session(
                     db,
                     session.selected_doctor_id,
-                    session.selected_date
+                    session.selected_date,
+                    selected_index
                 )
 
-                slots = []
-
-                for slot in all_slots:
-
-                    if (
-                        slot.start_time >= selected_session["start"]
-                        and
-                        slot.end_time <= selected_session["end"]
-                    ):
-                        slots.append(slot)
 
                 slot_text = ""
 
@@ -670,44 +658,22 @@ def process_message(user_number, incoming_msg, db):
                         f"{end_time}\n"
                     )
 
-                reply = (
-                    f"Available slots:\n\n"
-                    f"{slot_text}"
+                reply = build_slot_list_page(
+                    slots,
+                    page=0
                 )
-
-
 
     # =========================
     # HANDLE SLOT SELECTION
     # =========================
     elif session and session.current_step == "selecting_slot":
 
-        sessions = get_available_sessions(
+        slots = get_slots_for_selected_session(
             db,
             session.selected_doctor_id,
-            session.selected_date
-        )
-
-        selected_session = sessions[
+            session.selected_date,
             session.selected_session
-        ]
-
-        all_slots = get_available_slots(
-            db,
-            session.selected_doctor_id,
-            session.selected_date
         )
-
-        slots = []
-
-        for slot in all_slots:
-
-            if (
-                slot.start_time >= selected_session["start"]
-                and
-                slot.end_time <= selected_session["end"]
-            ):
-                slots.append(slot)
 
         if not normalized_msg.isdigit():
 

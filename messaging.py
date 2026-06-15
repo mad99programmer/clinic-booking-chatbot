@@ -53,3 +53,35 @@ def send_reply(conversation_id: str, account_id: str, message: str):
             }
         )
         print(f"Reply status: {r.status_code}, Response: {r.text}")
+
+def build_slot_list_page(
+    slots,
+    page=0
+):
+    return {
+        "message": "Choose an available slot:",
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "Choose an available slot:"
+            },
+            "action": {
+                "button": "Select Slot",
+                "sections": [
+                    {
+                        "title": "Available Slots",
+                        "rows": [
+                            {
+                                "id": "slot_1",
+                                "title": "10:00 AM"
+                            },
+                            {
+                                "id": "slot_2",
+                                "title": "10:15 AM"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
