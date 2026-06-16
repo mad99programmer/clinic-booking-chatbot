@@ -628,7 +628,13 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
                 reply = "Invalid session selection."
 
+
+           
             else:
+                session.selected_session = selected_index
+                session.current_step = "selecting_slot"
+
+                db.commit()
                 slots = get_slots_for_selected_session(
                     db,
                     session.selected_doctor_id,
