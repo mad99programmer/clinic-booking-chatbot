@@ -1,6 +1,6 @@
 from config import client, FROM_NUMBER, TEST_MODE, ZERNIO_API_KEY
 import requests
-from helpers import paginate_slots
+from helpers import paginate_slots,has_next_page,has_previous_page
 # =========================
 # DISPLAY MENU
 # =========================
@@ -101,6 +101,21 @@ def build_slot_list_page(slots,page=0):
                 "title": slot.start_time.strftime(
                     "%I:%M %p"
                 )
+            }
+        )
+    if has_previous_page(page):
+
+        rows.append(
+            {
+                "id": f"slot_page_{page - 1}",
+                "title": "⬅ Previous Slots"
+            }
+        )
+    if has_next_page(slots,page):
+        rows.append(
+            {
+                "id": f"slot_page_{page + 1}",
+                "title": "➡ More Slots"
             }
         )
     return {

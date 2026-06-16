@@ -6,7 +6,7 @@ from crud import (
 def paginate_slots(
     slots,
     page,
-    page_size=9
+    page_size=8
 ):
     start = page * page_size
     end = start + page_size

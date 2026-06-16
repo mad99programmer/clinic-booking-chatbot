@@ -88,3 +88,149 @@ sample data returned when a user sends hi
 
   "timestamp": "2026-06-14T18:45:53.511Z"
 }
+
+
+
+    # =========================
+    # HANDLE SESSIONS SELECTION
+    # =========================
+
+    elif session and session.current_step == "selecting_session":
+
+        sessions = get_available_sessions(
+            db,
+            session.selected_doctor_id,
+            session.selected_date
+        )
+
+        if not normalized_msg.isdigit():
+
+            reply = "Please enter a valid session number."
+
+        else:
+
+            selected_index = int(normalized_msg) - 1
+
+            if (
+                selected_index < 0
+                or selected_index >= len(sessions)
+            ):
+
+                reply = "Invalid session selection."
+
+            else:
+                slots = get_slots_for_selected_session(
+                    db,
+                    session.selected_doctor_id,
+                    session.selected_date,
+                    selected_index
+                )
+
+
+                slot_text = ""
+
+                for index, slot in enumerate(
+                    slots,
+                    start=1
+                ):
+
+                    start_time = slot.start_time.strftime(
+                        "%I:%M %p"
+                    )
+
+                    end_time = slot.end_time.strftime(
+                        "%I:%M %p"
+                    )
+
+                    slot_text += (
+                        f"{index}️⃣ "
+                        f"{start_time} - "
+                        f"{end_time}\n"
+                    )
+
+                reply = build_slot_list_page(
+                    slots,
+                    page=0
+                )
+
+    # =========================
+    # HANDLE SLOT SELECTION
+    # =========================
+    elif session and session.current_step == "selecting_slot":
+
+        slots = get_slots_for_selected_session(
+            db,
+            session.selected_doctor_id,
+            session.selected_date,
+            session.selected_session
+        )
+
+        if not normalized_msg.isdigit():
+
+            reply = "Please enter a valid slot number."
+
+        else:
+
+            selected_index = int(normalized_msg) - 1
+
+            if (
+                selected_index < 0
+                or selected_index >= len(slots)
+            ):
+
+                reply = "Invalid slot selection."
+
+            else:
+
+                selected_slot = slots[selected_index]
+
+                if selected_slot.status != "available":
+
+                    reply = (
+                        "Sorry, this slot was just booked.\n\n"
+                        "Please go back and choose another slot."
+                    )
+
+                else:
+
+                    selected_slot.status = "booked"
+
+                    user = db.query(User).filter(
+                        User.phone_number == user_number
+                    ).first()
+
+                    appointment = Appointment(
+                        user_id=user.id,
+                        doctor_id=session.selected_doctor_id,
+                        slot_id=selected_slot.id,
+                        appointment_date=selected_slot.slot_date,
+                        status="booked"
+                    )
+
+                    db.add(appointment)
+
+                    session.current_step            = "idle"
+                    session.selected_specialization = None
+                    session.selected_doctor_id      = None
+                    session.selected_date           = None
+                    session.selected_session = None
+                    db.commit()
+
+                    doctor = db.query(Doctor).filter(
+                        Doctor.id == appointment.doctor_id
+                    ).first()
+
+                    formatted_date = selected_slot.slot_date.strftime(
+                        "%d %B %Y"
+                    )
+                    start_time = selected_slot.start_time.strftime(
+                        "%I:%M %p"
+                    )
+
+                    reply = (
+                        f"✅ Appointment booked!\n\n"
+                        f"👨‍⚕️ Doctor: {doctor.name}\n"
+                        f"📅 Date: {formatted_date}\n"
+                        f"⏰ Time: {start_time}\n\n"
+                        f"Thank you!"
+                    )

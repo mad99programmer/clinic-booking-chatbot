@@ -675,76 +675,100 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             session.selected_session
         )
 
-        if not normalized_msg.isdigit():
+        payload = effective_input
 
-            reply = "Please enter a valid slot number."
+        if payload.startswith("slot_page_"):
 
-        else:
+            page = int(
+                payload.replace(
+                    "slot_page_",
+                    ""
+                )
+            )
 
-            selected_index = int(normalized_msg) - 1
+            reply = build_slot_list_page(
+                slots,
+                page=page
+            )
 
-            if (
-                selected_index < 0
-                or selected_index >= len(slots)
-            ):
+        elif payload.startswith("slot_"):
+
+            slot_id = int(
+                payload.replace(
+                    "slot_",
+                    ""
+                )
+            )
+
+            selected_slot = next(
+                (
+                    slot
+                    for slot in slots
+                    if slot.id == slot_id
+                ),
+                None
+            )
+
+            if not selected_slot:
 
                 reply = "Invalid slot selection."
 
+            elif selected_slot.status != "available":
+
+                reply = (
+                    "Sorry, this slot was just booked.\n\n"
+                    "Please go back and choose another slot."
+                )
+
             else:
 
-                selected_slot = slots[selected_index]
+                selected_slot.status = "booked"
 
-                if selected_slot.status != "available":
+                user = db.query(User).filter(
+                    User.phone_number == user_number
+                ).first()
 
-                    reply = (
-                        "Sorry, this slot was just booked.\n\n"
-                        "Please go back and choose another slot."
-                    )
+                appointment = Appointment(
+                    user_id=user.id,
+                    doctor_id=session.selected_doctor_id,
+                    slot_id=selected_slot.id,
+                    appointment_date=selected_slot.slot_date,
+                    status="booked"
+                )
 
-                else:
+                db.add(appointment)
 
-                    selected_slot.status = "booked"
+                session.current_step = "idle"
+                session.selected_specialization = None
+                session.selected_doctor_id = None
+                session.selected_date = None
+                session.selected_session = None
 
-                    user = db.query(User).filter(
-                        User.phone_number == user_number
-                    ).first()
+                db.commit()
 
-                    appointment = Appointment(
-                        user_id=user.id,
-                        doctor_id=session.selected_doctor_id,
-                        slot_id=selected_slot.id,
-                        appointment_date=selected_slot.slot_date,
-                        status="booked"
-                    )
+                doctor = db.query(Doctor).filter(
+                    Doctor.id == appointment.doctor_id
+                ).first()
 
-                    db.add(appointment)
+                formatted_date = selected_slot.slot_date.strftime(
+                    "%d %B %Y"
+                )
 
-                    session.current_step            = "idle"
-                    session.selected_specialization = None
-                    session.selected_doctor_id      = None
-                    session.selected_date           = None
-                    session.selected_session = None
-                    db.commit()
+                start_time = selected_slot.start_time.strftime(
+                    "%I:%M %p"
+                )
 
-                    doctor = db.query(Doctor).filter(
-                        Doctor.id == appointment.doctor_id
-                    ).first()
+                reply = (
+                    f"✅ Appointment booked!\n\n"
+                    f"👨‍⚕️ Doctor: {doctor.name}\n"
+                    f"📅 Date: {formatted_date}\n"
+                    f"⏰ Time: {start_time}\n\n"
+                    f"Thank you!"
+                )
 
-                    formatted_date = selected_slot.slot_date.strftime(
-                        "%d %B %Y"
-                    )
-                    start_time = selected_slot.start_time.strftime(
-                        "%I:%M %p"
-                    )
+        else:
 
-                    reply = (
-                        f"✅ Appointment booked!\n\n"
-                        f"👨‍⚕️ Doctor: {doctor.name}\n"
-                        f"📅 Date: {formatted_date}\n"
-                        f"⏰ Time: {start_time}\n\n"
-                        f"Thank you!"
-                    )
-
+            reply = "Invalid slot selection."
     # =========================
     # HANDLE CANCEL — SELECT APPOINTMENT
     # =========================
