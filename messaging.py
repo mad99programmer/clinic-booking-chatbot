@@ -108,7 +108,7 @@ def build_specialization_list(
     rows.append(
         {
             "id": "ai_receptionist",
-            "title": "🤖 Consult our AI"
+            "title": "Consult our AI"
         }
     )
 
@@ -122,10 +122,10 @@ def build_specialization_list(
                 )
             },
             "action": {
-                "button": "Select Specialization",
+                "button": "Select",
                 "sections": [
                     {
-                        "title": "Available Specializations",
+                        "title": "Options",
                         "rows": rows
                     }
                 ]
