@@ -357,78 +357,72 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
         payload = effective_input
 
-        if not normalized_msg.isdigit():
+       
 
-            reply = (
-                "Please enter a valid specialization number."
-            )
+        selected_index = int(normalized_msg) - 1
+
+        if (
+            selected_index < 0
+            or selected_index > len(specializations)
+        ):
+
+            reply = "Invalid specialization selection."
 
         else:
 
-            selected_index = int(normalized_msg) - 1
+            # AI receptionist selected
+            if payload == "ai_receptionist":
 
-            if (
-                selected_index < 0
-                or selected_index > len(specializations)
-            ):
+                session.current_step = "ai_symptom_collection"
+                db.commit()
 
-                reply = "Invalid specialization selection."
+                reply = "🤖 Please describe your symptoms."
 
+            # Manual specialization selected
+            elif payload.startswith("specialization_"):
+
+                selected_index = int(
+                    payload.replace(
+                        "specialization_",
+                        ""
+                    )
+                )
+
+
+
+                selected_specialization = (
+                    specializations[selected_index]
+                )
+
+                session.selected_specialization = (
+                    selected_specialization
+                )
+                session.current_step = "seleaicting_doctor"
+                db.commit()
+
+                doctors = get_doctors_by_specialization(
+                    db, selected_specialization
+                )
+
+                doctor_text = ""
+
+                for index, doctor in enumerate(
+                    doctors, start=1
+                ):
+                    doctor_text += (
+                        f"{index}️⃣ {doctor.name}\n"
+                    )
+
+                reply = (
+                    f"Available doctors for "
+                    f"{selected_specialization}:\n\n"
+                    f"{doctor_text}"
+                )
             else:
 
-                # AI receptionist selected
-                if payload == "ai_receptionist":
-
-                    session.current_step = "ai_symptom_collection"
-                    db.commit()
-
-                    reply = "🤖 Please describe your symptoms."
-
-                # Manual specialization selected
-                elif payload.startswith("specialization_"):
-
-                    selected_index = int(
-                        payload.replace(
-                            "specialization_",
-                            ""
-                        )
-                    )
-
-
-
-                    selected_specialization = (
-                        specializations[selected_index]
-                    )
-
-                    session.selected_specialization = (
-                        selected_specialization
-                    )
-                    session.current_step = "selecting_doctor"
-                    db.commit()
-
-                    doctors = get_doctors_by_specialization(
-                        db, selected_specialization
-                    )
-
-                    doctor_text = ""
-
-                    for index, doctor in enumerate(
-                        doctors, start=1
-                    ):
-                        doctor_text += (
-                            f"{index}️⃣ {doctor.name}\n"
-                        )
-
-                    reply = (
-                        f"Available doctors for "
-                        f"{selected_specialization}:\n\n"
-                        f"{doctor_text}"
-                    )
-                else:
-
-                    reply = (
-                        "Invalid specialization selection."
-                    )
+                reply = (
+                    "Invalid specialization selection."
+                )
 
     # =========================
     # HANDLE AI SYMPTOM COLLECTION
