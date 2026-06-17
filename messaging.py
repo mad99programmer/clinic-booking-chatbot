@@ -87,6 +87,56 @@ def send_reply(
     )
 
 
+#Below function is responsible for creating list picker for specialization (physician,cardiologist etc)
+def build_specialization_list(
+    specializations,
+    user_name
+):
+    rows = []
+
+    for index, specialization in enumerate(
+        specializations
+    ):
+
+        rows.append(
+            {
+                "id": f"specialization_{index}",
+                "title": specialization
+            }
+        )
+
+    rows.append(
+        {
+            "id": "ai_receptionist",
+            "title": "🤖 Consult our AI"
+        }
+    )
+
+    return {
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": (
+                    f"Welcome back {user_name} 👋\n\n"
+                    f"Choose a specialization:"
+                )
+            },
+            "action": {
+                "button": "Select Specialization",
+                "sections": [
+                    {
+                        "title": "Available Specializations",
+                        "rows": rows
+                    }
+                ]
+            }
+        }
+    }
+
+
+
+
+#Below function is responsible for creating list picker for slots (9:00 am,9:15 am .....)
 def build_slot_list_page(slots,page=0):
     page_slots = paginate_slots(
     slots,

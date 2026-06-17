@@ -8,7 +8,7 @@ from crud import (
     get_available_sessions
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import display_menu,build_slot_list_page
+from messaging import display_menu,build_specialization_list,build_slot_list_page
 from datetime import date
 
 from helpers import get_slots_for_selected_session,extract_payload
@@ -355,6 +355,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
         specializations = get_specializations(db)
 
+        payload = effective_input
+
         if not normalized_msg.isdigit():
 
             reply = (
@@ -375,7 +377,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             else:
 
                 # AI receptionist selected
-                if selected_index == len(specializations):
+                if payload == "ai_receptionist":
 
                     session.current_step = "ai_symptom_collection"
                     db.commit()
@@ -383,7 +385,16 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     reply = "🤖 Please describe your symptoms."
 
                 # Manual specialization selected
-                else:
+                elif payload.startswith("specialization_"):
+
+                    selected_index = int(
+                        payload.replace(
+                            "specialization_",
+                            ""
+                        )
+                    )
+
+
 
                     selected_specialization = (
                         specializations[selected_index]
@@ -412,6 +423,11 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                         f"Available doctors for "
                         f"{selected_specialization}:\n\n"
                         f"{doctor_text}"
+                    )
+                else:
+
+                    reply = (
+                        "Invalid specialization selection."
                     )
 
     # =========================
@@ -929,22 +945,9 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             session.current_step = "selecting_specialization"
             db.commit()
 
-            specialization_text = ""
-
-            for index, specialization in enumerate(
-                specializations, start=1
-            ):
-                specialization_text += f"{index}️⃣ {specialization}\n"
-
-            specialization_text += (
-                f"{len(specializations)+1}️⃣ "
-                f"Consult our AI Medical Receptionist\n"
-            )
-
-            reply = (
-                f"Welcome back {user.name} 👋\n\n"
-                f"Choose specialization:\n\n"
-                f"{specialization_text}"
+            reply = build_specialization_list(
+                specializations,
+                user.name
             )
 
     # =========================
