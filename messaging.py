@@ -134,7 +134,37 @@ def build_specialization_list(
     }
 
 
+#Below function is responsible for creating list picker for doctors (Dr Manta, Dr Pinkesh....)
+def build_doctor_list(doctors):
 
+    rows = []
+
+    for doctor in doctors:
+
+        rows.append(
+            {
+                "id": f"doctor_{doctor.id}",
+                "title": doctor.name
+            }
+        )
+
+    return {
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "Please select a doctor:"
+            },
+            "action": {
+                "button": "Select Doctor",
+                "sections": [
+                    {
+                        "title": "Available Doctors",
+                        "rows": rows
+                    }
+                ]
+            }
+        }
+    }
 
 #Below function is responsible for creating list picker for slots (9:00 am,9:15 am .....)
 def build_slot_list_page(slots,page=0):

@@ -8,7 +8,7 @@ from crud import (
     get_available_sessions
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import display_menu,build_specialization_list,build_slot_list_page
+from messaging import display_menu,build_specialization_list,build_doctor_list,build_slot_list_page
 from datetime import date
 
 from helpers import get_slots_for_selected_session,extract_payload
@@ -397,19 +397,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                 db, selected_specialization
             )
 
-            doctor_text = ""
-
-            for index, doctor in enumerate(
-                doctors, start=1
-            ):
-                doctor_text += (
-                    f"{index}️⃣ {doctor.name}\n"
-                )
-
-            reply = (
-                f"Available doctors for "
-                f"{selected_specialization}:\n\n"
-                f"{doctor_text}"
+            reply = build_doctor_list(
+                doctors
             )
         else:
 
