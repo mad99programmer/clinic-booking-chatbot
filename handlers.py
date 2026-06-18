@@ -357,12 +357,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
         payload = effective_input
 
-       
-
-        
-
-        
-
+    
         # AI receptionist selected
         if payload == "ai_receptionist":
 
@@ -390,7 +385,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             session.selected_specialization = (
                 selected_specialization
             )
-            session.current_step = "seleaicting_doctor"
+            session.current_step = "selecting_doctor"
             db.commit()
 
             doctors = get_doctors_by_specialization(
