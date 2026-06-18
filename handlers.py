@@ -462,46 +462,64 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
     elif session and session.current_step == "selecting_doctor":
 
         doctors = get_doctors_by_specialization(
-            db, session.selected_specialization
+            db,
+            session.selected_specialization
         )
 
-        if not normalized_msg.isdigit():
+        payload = effective_input
 
-            reply = "Please enter a valid doctor number."
+        if not payload.startswith("doctor_"):
+
+            reply = "Invalid doctor selection."
 
         else:
 
-            selected_index = int(normalized_msg) - 1
+            doctor_id = int(
+                payload.replace(
+                    "doctor_",
+                    ""
+                )
+            )
 
-            if (
-                selected_index < 0
-                or selected_index >= len(doctors)
-            ):
+            selected_doctor = next(
+                (
+                    doctor
+                    for doctor in doctors
+                    if doctor.id == doctor_id
+                ),
+                None
+            )
+
+            if not selected_doctor:
 
                 reply = "Invalid doctor selection."
 
             else:
 
-                selected_doctor = doctors[selected_index]
                 session.selected_doctor_id = selected_doctor.id
                 session.current_step = "selecting_date"
+
                 db.commit()
 
                 available_dates = get_available_dates(
-                    db, selected_doctor.id
+                    db,
+                    selected_doctor.id
                 )
 
                 if not available_dates:
 
                     session.current_step = "selecting_specialization"
                     session.selected_doctor_id = None
+
                     db.commit()
 
                     specializations = get_specializations(db)
+
                     specialization_text = ""
 
                     for index, specialization in enumerate(
-                        specializations, start=1
+                        specializations,
+                        start=1
                     ):
                         specialization_text += (
                             f"{index}️⃣ {specialization}\n"
@@ -523,19 +541,23 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     date_text = ""
 
                     for index, slot_date in enumerate(
-                        available_dates, start=1
+                        available_dates,
+                        start=1
                     ):
                         formatted_date = slot_date.strftime(
                             "%d %B %Y"
                         )
-                        date_text += f"{index}️⃣ {formatted_date}\n"
+
+                        date_text += (
+                            f"{index}️⃣ "
+                            f"{formatted_date}\n"
+                        )
 
                     reply = (
                         f"Available dates for "
                         f"{selected_doctor.name}:\n\n"
                         f"{date_text}"
                     )
-
     # =========================
     # HANDLE DATE SELECTION
     # =========================
