@@ -166,6 +166,47 @@ def build_doctor_list(doctors):
         }
     }
 
+#Below function is responsible for creating list picker for dates
+def build_date_list(
+    available_dates
+):
+
+    rows = []
+
+    for index, slot_date in enumerate(
+        available_dates
+    ):
+
+        formatted_date = slot_date.strftime(
+            "%d %B %Y"
+        )
+
+        rows.append(
+            {
+                "id": f"date_{index}",
+                "title": formatted_date
+            }
+        )
+
+    return {
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "Please select a date:"
+            },
+            "action": {
+                "button": "Select Date",
+                "sections": [
+                    {
+                        "title": "Available Dates",
+                        "rows": rows
+                    }
+                ]
+            }
+        }
+    }
+
+
 #Below function is responsible for creating list picker for slots (9:00 am,9:15 am .....)
 def build_slot_list_page(slots,page=0):
     page_slots = paginate_slots(

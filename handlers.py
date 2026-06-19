@@ -8,7 +8,7 @@ from crud import (
     get_available_sessions
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import display_menu,build_specialization_list,build_doctor_list,build_slot_list_page
+from messaging import display_menu,build_specialization_list,build_doctor_list,build_date_list,build_slot_list_page
 from datetime import date
 
 from helpers import get_slots_for_selected_session,extract_payload
@@ -532,43 +532,34 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     )
 
                 else:
-
-                    date_text = ""
-
-                    for index, slot_date in enumerate(
-                        available_dates,
-                        start=1
-                    ):
-                        formatted_date = slot_date.strftime(
-                            "%d %B %Y"
-                        )
-
-                        date_text += (
-                            f"{index}️⃣ "
-                            f"{formatted_date}\n"
-                        )
-
-                    reply = (
-                        f"Available dates for "
-                        f"{selected_doctor.name}:\n\n"
-                        f"{date_text}"
+                    reply = build_date_list(
+                        available_dates
                     )
+
     # =========================
     # HANDLE DATE SELECTION
     # =========================
     elif session and session.current_step == "selecting_date":
 
         available_dates = get_available_dates(
-            db, session.selected_doctor_id
+            db,
+            session.selected_doctor_id
         )
 
-        if not normalized_msg.isdigit():
+        payload = effective_input
 
-            reply = "Please enter a valid date number."
+        if not payload.startswith("date_"):
+
+            reply = "Invalid date selection."
 
         else:
 
-            selected_index = int(normalized_msg) - 1
+            selected_index = int(
+                payload.replace(
+                    "date_",
+                    ""
+                )
+            )
 
             if (
                 selected_index < 0
@@ -580,8 +571,10 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             else:
 
                 selected_date = available_dates[selected_index]
+
                 session.selected_date = selected_date
                 session.current_step = "selecting_session"
+
                 db.commit()
 
                 sessions = get_available_sessions(
@@ -592,24 +585,31 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
                 session_text = ""
 
+                for index, session_data in enumerate(
+                    sessions,
+                    start=1
+                ):
 
-                for index, session_data in enumerate(sessions, start=1):
+                    start_time = session_data["start"].strftime(
+                        "%I:%M %p"
+                    )
 
-                    
-                    start_time = session_data["start"].strftime("%I:%M %p")
-                    end_time = session_data["end"].strftime("%I:%M %p")
-                    
+                    end_time = session_data["end"].strftime(
+                        "%I:%M %p"
+                    )
 
                     session_text += (
-                        f"{index}️⃣ {start_time} - {end_time}\n"
+                        f"{index}️⃣ "
+                        f"{start_time} - "
+                        f"{end_time}\n"
                     )
 
                 reply = (
                     f"📅 {selected_date.strftime('%d %B %Y')}\n\n"
                     f"Choose a session:\n\n"
                     f"{session_text}"
-                )
-
+                )                    
+    
     # =========================
     # HANDLE SESSIONS SELECTION
     # =========================
