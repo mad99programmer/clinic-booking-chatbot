@@ -11,12 +11,7 @@ from validators import is_valid_name, is_valid_email, is_valid_age
 from messaging import (build_specialization_list,build_doctor_list,build_date_list,
 build_session_list,build_slot_list_page,build_cancel_appointment_list)
 from datetime import date
-from clinic_config import (
-    CLINIC_NAME,
-    CLINIC_ADDRESS,
-    CLINIC_HOURS,
-    GOOGLE_MAPS_URL
-)
+
 from helpers import get_slots_for_selected_session,extract_payload,build_main_menu
 MENU_COMMANDS = [
     "hi",
