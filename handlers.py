@@ -5,10 +5,10 @@ from crud import (
     get_doctors_by_specialization,
     get_available_dates,
     get_available_slots,
-    get_available_sessions
+    get_available_sessions_v2
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import display_menu,build_specialization_list,build_doctor_list,build_date_list,build_slot_list_page
+from messaging import display_menu,build_specialization_list,build_doctor_list,build_date_list,build_session_list,build_slot_list_page
 from datetime import date
 
 from helpers import get_slots_for_selected_session,extract_payload
@@ -577,58 +577,42 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
                 db.commit()
 
-                sessions = get_available_sessions(
+                sessions = get_available_sessions_v2(
                     db,
                     session.selected_doctor_id,
                     selected_date
                 )
 
-                session_text = ""
-
-                for index, session_data in enumerate(
-                    sessions,
-                    start=1
-                ):
-
-                    start_time = session_data["start"].strftime(
-                        "%I:%M %p"
-                    )
-
-                    end_time = session_data["end"].strftime(
-                        "%I:%M %p"
-                    )
-
-                    session_text += (
-                        f"{index}️⃣ "
-                        f"{start_time} - "
-                        f"{end_time}\n"
-                    )
-
-                reply = (
-                    f"📅 {selected_date.strftime('%d %B %Y')}\n\n"
-                    f"Choose a session:\n\n"
-                    f"{session_text}"
-                )                    
-    
+                reply = build_session_list(
+                    sessions
+                )
+                    
     # =========================
     # HANDLE SESSIONS SELECTION
     # =========================
 
     elif session and session.current_step == "selecting_session":
 
-        sessions = get_available_sessions(
+        sessions = get_available_sessions_v2(
             db,
             session.selected_doctor_id,
             session.selected_date
         )
 
-        if not normalized_msg.isdigit():
+        payload = effective_input
 
-            reply = "Please enter a valid session number."
+        if not payload.startswith("session_"):
+
+            reply = "Invalid session selection."
 
         else:
 
-            selected_index = int(normalized_msg) - 1
+            selected_index = int(
+                payload.replace(
+                    "session_",
+                    ""
+                )
+            )
 
             if (
                 selected_index < 0
@@ -637,13 +621,13 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
                 reply = "Invalid session selection."
 
-
-           
             else:
+
                 session.selected_session = selected_index
                 session.current_step = "selecting_slot"
 
                 db.commit()
+
                 slots = get_slots_for_selected_session(
                     db,
                     session.selected_doctor_id,
@@ -651,33 +635,10 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     selected_index
                 )
 
-
-                slot_text = ""
-
-                for index, slot in enumerate(
-                    slots,
-                    start=1
-                ):
-
-                    start_time = slot.start_time.strftime(
-                        "%I:%M %p"
-                    )
-
-                    end_time = slot.end_time.strftime(
-                        "%I:%M %p"
-                    )
-
-                    slot_text += (
-                        f"{index}️⃣ "
-                        f"{start_time} - "
-                        f"{end_time}\n"
-                    )
-
                 reply = build_slot_list_page(
                     slots,
                     page=0
                 )
-
     # =========================
     # HANDLE SLOT SELECTION
     # =========================

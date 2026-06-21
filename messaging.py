@@ -206,6 +206,52 @@ def build_date_list(
         }
     }
 
+def build_session_list(
+    sessions
+):
+
+    rows = []
+
+    for index, session in enumerate(
+        sessions
+    ):
+
+        start_time = session["start"].strftime(
+            "%I:%M %p"
+        )
+
+        end_time = session["end"].strftime(
+            "%I:%M %p"
+        )
+
+        rows.append(
+            {
+                "id": f"session_{index}",
+                "title": (
+                    f"{start_time} - "
+                    f"{end_time}"
+                )
+            }
+        )
+
+    return {
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "Please select a session:"
+            },
+            "action": {
+                "button": "Select Session",
+                "sections": [
+                    {
+                        "title": "Available Sessions",
+                        "rows": rows
+                    }
+                ]
+            }
+        }
+    }
+
 
 #Below function is responsible for creating list picker for slots (9:00 am,9:15 am .....)
 def build_slot_list_page(slots,page=0):

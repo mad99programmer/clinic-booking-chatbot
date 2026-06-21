@@ -1,4 +1,4 @@
-from models import Doctor, DoctorSlot
+from models import Doctor, DoctorSlot, DoctorAvailability
 from datetime import date, datetime, time
 
 # =========================
@@ -132,5 +132,62 @@ def get_available_sessions(
         "start": current_start,
         "end": previous_end
     })
+
+    return sessions
+
+
+# =========================
+# GET AVAILABLE SESSIONS V2
+# =========================
+def get_available_sessions_v2(
+    db,
+    doctor_id,
+    slot_date
+):
+    weekday = slot_date.strftime("%A")
+
+    availabilities = (
+        db.query(DoctorAvailability)
+        .filter(
+            DoctorAvailability.doctor_id == doctor_id,
+            DoctorAvailability.weekday == weekday,
+            DoctorAvailability.is_active == True
+        )
+        .order_by(
+            DoctorAvailability.start_time
+        )
+        .all()
+    )
+
+    available_slots = get_available_slots(
+        db,
+        doctor_id,
+        slot_date
+    )
+
+    sessions = []
+
+    for availability in availabilities:
+
+        has_available_slot = False
+
+        for slot in available_slots:
+
+            if (
+                slot.start_time >= availability.start_time
+                and
+                slot.end_time <= availability.end_time
+            ):
+                has_available_slot = True
+                break
+
+        if has_available_slot:
+
+            sessions.append(
+                {
+                    "start": availability.start_time,
+                    "end": availability.end_time
+                }
+            )
 
     return sessions

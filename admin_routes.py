@@ -12,7 +12,7 @@ from database import SessionLocal
 from models import User, Doctor, DoctorSlot, DoctorAvailability, Appointment,DoctorLeave
 from security import get_current_admin
 from fastapi import Depends
-
+from messaging import send_reply
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -775,7 +775,7 @@ def get_doctor_leaves(
 # LEAVE — MARK LEAVE
 # handles: cancel booked appointments + notify patients + delete available slots
 # =========================
-@router.post("/doctors/{doctor_id}/leave")
+
 @router.post("/doctors/{doctor_id}/leave")
 def mark_leave(
     doctor_id: int,
@@ -783,7 +783,7 @@ def mark_leave(
     current_admin = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    from messaging import send_reply
+    
 
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
     if not doctor:
