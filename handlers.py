@@ -243,8 +243,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             db.commit()
 
             reply = (
-                "Please enter your age.\n\n"
-                "Example: 25"
+                "Please enter your age.\n"
+                
             )
 
     # =========================
@@ -261,8 +261,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
         elif not is_valid_age(incoming_msg):
 
             reply = (
-                "⚠️ Please enter a valid age.\n\n"
-                "Example: 25"
+                "⚠️ Please enter a valid age.\n"
+                
             )
 
         else:
@@ -755,31 +755,54 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
     ):
 
         appointments = get_upcoming_appointments(
-            user_number, db
+            user_number,
+            db
         )
 
-        if not normalized_msg.isdigit():
+        payload = effective_input
 
-            reply = "Please enter a valid appointment number."
+        if not payload.startswith(
+            "appointment_"
+        ):
+
+            reply = (
+                "Invalid appointment selection."
+            )
 
         else:
 
-            selected_index = int(normalized_msg) - 1
+            appointment_id = int(
+                payload.replace(
+                    "appointment_",
+                    ""
+                )
+            )
 
-            if (
-                selected_index < 0
-                or selected_index >= len(appointments)
-            ):
+            selected_appt = next(
+                (
+                    appt
+                    for appt in appointments
+                    if appt["id"] == appointment_id
+                ),
+                None
+            )
 
-                reply = "Invalid selection. Please try again."
+            if not selected_appt:
+
+                reply = (
+                    "Invalid selection. Please try again."
+                )
 
             else:
 
-                selected_appt = appointments[selected_index]
+                session.selected_slot_id = (
+                    selected_appt["id"]
+                )
 
-                # store appointment id in slot_id field temporarily
-                session.selected_slot_id = selected_appt["id"]
-                session.current_step     = "confirming_cancel"
+                session.current_step = (
+                    "confirming_cancel"
+                )
+
                 db.commit()
 
                 reply = (
@@ -790,7 +813,6 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     f"1️⃣ Yes, cancel it\n"
                     f"2️⃣ No, keep it"
                 )
-
     # =========================
     # HANDLE CANCEL — CONFIRM
     # =========================
