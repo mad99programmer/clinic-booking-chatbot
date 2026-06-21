@@ -8,7 +8,8 @@ from crud import (
     get_available_sessions_v2
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import display_menu,build_specialization_list,build_doctor_list,build_date_list,build_session_list,build_slot_list_page
+from messaging import (display_menu,build_specialization_list,build_doctor_list,build_date_list,
+build_session_list,build_slot_list_page,build_cancel_appointment_list)
 from datetime import date
 
 from helpers import get_slots_for_selected_session,extract_payload
@@ -947,13 +948,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                 session.current_step = "selecting_cancel"
                 db.commit()
 
-                appt_text = format_appointments(appointments)
-
-                reply = (
-                    f"Your upcoming appointments:\n\n"
-                    f"{appt_text}"
-                    f"Which one would you like to cancel?\n"
-                    f"Reply with the number."
+                reply = build_cancel_appointment_list(
+                    appointments
                 )
 
     # =========================

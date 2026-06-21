@@ -302,3 +302,41 @@ def build_slot_list_page(slots,page=0):
             }
         }
     }
+
+
+def build_cancel_appointment_list(
+    appointments
+):
+
+    rows = []
+
+    for appointment in appointments:
+
+        rows.append(
+            {
+                "id": f"appointment_{appointment['id']}",
+                "title": appointment["doctor_name"],
+                "description": (
+                    f"{appointment['date']} "
+                    f"{appointment['time']}"
+                )
+            }
+        )
+
+    return {
+        "interactive": {
+            "type": "list",
+            "body": {
+                "text": "Select an appointment to cancel:"
+            },
+            "action": {
+                "button": "Appointments",
+                "sections": [
+                    {
+                        "title": "Upcoming Appointments",
+                        "rows": rows
+                    }
+                ]
+            }
+        }
+    }
