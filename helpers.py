@@ -3,6 +3,7 @@ from crud import (
     get_available_slots
 )
 
+
 def paginate_slots(
     slots,
     page,

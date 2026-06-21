@@ -45,39 +45,33 @@ async def receive_whatsapp_message(request: Request):
     # --------------------------------------------------
     if message_body == "hi":
 
-
-
         body = {
-            "accountId": account_id,
-            "interactive": {
-                "type": "list",
-                "body": {
-                    "text": "Choose an available slot:"
-                },
-                "action": {
-                    "button": "Select Slot",
-                    "sections": [
-                        {
-                            "title": "Available Slots",
-                            "rows": [
-                                {
-                                    "id": "slot_0900",
-                                    "title": "09:00 AM"
-                                },
-                                {
-                                    "id": "slot_0915",
-                                    "title": "09:15 AM"
-                                },
-                                {
-                                    "id": "slot_0930",
-                                    "title": "09:30 AM"
-                                }
-                            ]
-                        }
-                    ]
-                }
+        "accountId": account_id,
+        "message": (
+            "👋 Welcome to City Clinic!\n\n"
+            "📍 Location\n"
+            "123 MG Road, Mumbai\n\n"
+            "🕒 Hours\n"
+            "Mon - Sat: 10:00 AM - 8:00 PM\n\n"
+            "How can I help you today?"
+        ),
+        "buttons": [
+            {
+                "title": "📅 Book",
+                "payload": "menu_book"
+            },
+            {
+                "title": "❌ Cancel",
+                "payload": "menu_cancel"
+            },
+            {
+                "title": "📋 My Visits",
+                "payload": "menu_my_appointments"
             }
-        }
+        ]
+    }
+
+       
         r = requests.post(
             f"https://zernio.com/api/v1/inbox/conversations/{conversation_id}/messages",
             headers={

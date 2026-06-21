@@ -1,20 +1,40 @@
 from config import client, FROM_NUMBER, TEST_MODE, ZERNIO_API_KEY
 import requests
 from helpers import paginate_slots,has_next_page,has_previous_page
-# =========================
-# DISPLAY MENU
-# =========================
-def display_menu():
-    return (
-        "👋 Welcome to City Clinic!\n\n"
-        "Please choose an option:\n\n"
-        "1️⃣ Book Appointment\n"
-        "2️⃣ Cancel Appointment\n"
-        "3️⃣ My Appointments\n"
-        "4️⃣ Clinic Hours\n"
-        "5️⃣ Location"
-    )
 
+from clinic_config import (
+    CLINIC_NAME,
+    CLINIC_ADDRESS,
+    CLINIC_HOURS,
+    GOOGLE_MAPS_URL
+)
+def build_main_menu():
+
+    return {
+        "message": (
+            f"👋 Welcome to {CLINIC_NAME}!\n\n"
+            f"📍 Location\n"
+            f"{CLINIC_ADDRESS}\n"
+            f"{GOOGLE_MAPS_URL}\n\n"
+            f"🕒 Hours\n"
+            f"{CLINIC_HOURS}\n\n"
+            "How can I help you today?"
+        ),
+        "buttons": [
+            {
+                "title": "📅 Book Appointment",
+                "payload": "menu_book"
+            },
+            {
+                "title": "❌ Cancel Appointment",
+                "payload": "menu_cancel"
+            },
+            {
+                "title": "📋 My Appointments",
+                "payload": "menu_my_appointments"
+            }
+        ]
+    }
 # =========================
 # SEND WHATSAPP MESSAGE using TWILIO
 # =========================

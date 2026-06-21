@@ -13,6 +13,27 @@ from auth_routes import router as auth_router
 Base.metadata.create_all(bind=engine)
 
 
+
+
+
+#handling double message from zernio 
+from collections import OrderedDict
+import time
+
+_processed_messages = OrderedDict()
+_DEDUPE_TTL_SECONDS = 300  # 5 min
+
+def is_duplicate(message_id: str) -> bool:
+    now = time.time()
+    expired = [mid for mid, ts in _processed_messages.items() if now - ts > _DEDUPE_TTL_SECONDS]
+    for mid in expired:
+        _processed_messages.pop(mid, None)
+    if message_id in _processed_messages:
+        return True
+    _processed_messages[message_id] = now
+    return False
+
+
 #temporary admin creation
 
 
@@ -106,6 +127,9 @@ async def webhook_zernio(request: Request, db: Session = Depends(get_db)):
     if payload.get("event") == "message.received":
         message = payload.get("message", {})
         account = payload.get("account", {})
+        message_id = message.get("id")
+        if message_id and is_duplicate(message_id):
+            return {"status": "duplicate, skipped"}
 
         user_number = message.get("sender", {}).get("phoneNumber")
         incoming_msg = message.get("text", "").strip()

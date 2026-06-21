@@ -8,11 +8,16 @@ from crud import (
     get_available_sessions_v2
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import (display_menu,build_specialization_list,build_doctor_list,build_date_list,
+from messaging import (build_specialization_list,build_doctor_list,build_date_list,
 build_session_list,build_slot_list_page,build_cancel_appointment_list)
 from datetime import date
-
-from helpers import get_slots_for_selected_session,extract_payload
+from clinic_config import (
+    CLINIC_NAME,
+    CLINIC_ADDRESS,
+    CLINIC_HOURS,
+    GOOGLE_MAPS_URL
+)
+from helpers import get_slots_for_selected_session,extract_payload,build_main_menu
 MENU_COMMANDS = [
     "hi",
     "hello",
@@ -25,23 +30,6 @@ MENU_COMMANDS = [
     "4",
     "5"
 ]
-
-
-
-# =========================
-# DISPLAY MENU
-# =========================
-def display_menu():
-    return (
-        "👋 Welcome to City Clinic!\n\n"
-        "Please choose an option:\n\n"
-        "1️⃣ Book Appointment\n"
-        "2️⃣ Cancel Appointment\n"
-        "3️⃣ My Appointments\n"
-        "4️⃣ Clinic Hours\n"
-        "5️⃣ Location"
-    )
-
 
 # =========================
 # GET UPCOMING APPOINTMENTS
@@ -152,7 +140,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
             db.commit()
 
-        return display_menu()
+        #return display_menu()
+        return build_main_menu()
 
     # =========================
     # HANDLE NAME COLLECTION
@@ -880,15 +869,15 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
     # MAIN MENU
     # =========================
     elif normalized_msg in [
-        "hi", "hello", "hey", "menu", "hie"
+        "hi", "hello", "hey", "menu", "home", "reset","hie"
     ]:
 
-        reply = display_menu()
+        reply = build_main_menu()
 
     # =========================
     # BOOK APPOINTMENT
     # =========================
-    elif normalized_msg == "1":
+    elif effective_input == "menu_book":
 
         user = db.query(User).filter(
             User.phone_number == user_number
@@ -930,7 +919,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
     # =========================
     # CANCEL APPOINTMENT
     # =========================
-    elif normalized_msg == "2":
+    elif effective_input == "menu_cancel":
 
         user = db.query(User).filter(
             User.phone_number == user_number
@@ -977,7 +966,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
     # =========================
     # MY APPOINTMENTS
     # =========================
-    elif normalized_msg == "3":
+    elif effective_input == "menu_my_appointments":
 
         user = db.query(User).filter(
             User.phone_number == user_number
@@ -1013,28 +1002,6 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     f"Reply *hi* to go back to the menu."
                 )
 
-    # =========================
-    # CLINIC HOURS
-    # =========================
-    elif normalized_msg == "4":
-
-        reply = (
-            "🕐 We're open Mon–Sat, "
-            "9 AM to 7 PM.\n"
-            "Sunday: 10 AM to 2 PM."
-        )
-
-    # =========================
-    # LOCATION
-    # =========================
-    elif normalized_msg == "5":
-
-        reply = (
-            "📍 123 Health Street, "
-            "Near Central Park.\n"
-            "Google Maps: "
-            "https://maps.google.com/?q=..."
-        )
 
     return reply
 
