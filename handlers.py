@@ -8,7 +8,7 @@ from crud import (
     get_available_sessions_v2
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import (build_specialization_list,build_doctor_list,build_date_list,build_cancel_confirmation_buttons,
+from messaging import (build_specialization_list,build_doctor_list,build_date_list,build_registration_confirmation_buttons,build_cancel_confirmation_buttons,
 build_session_list,build_slot_list_page,build_cancel_appointment_list,build_main_menu)
 from datetime import date
 
@@ -255,14 +255,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
             session.current_step = "confirming_details"
             db.commit()
 
-            reply = (
-                f"Please confirm your details:\n\n"
-                f"👤 Name: {session.temp_name}\n"
-                f"📧 Email: {session.temp_email}\n"
-                f"⚧ Gender: {session.temp_gender}\n"
-                f"🎂 Age: {session.temp_age}\n\n"
-                f"1️⃣ Yes, confirm\n"
-                f"2️⃣ No, start over"
+            reply = build_registration_confirmation_buttons(
+                session
             )
 
     # =========================
@@ -270,7 +264,9 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
     # =========================
     elif session and session.current_step == "confirming_details":
 
-        if normalized_msg == "1":
+        payload = effective_input
+
+        if payload == "register_confirm":
 
             new_user = User(
                 phone_number=user_number,
@@ -310,7 +306,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                 f"{specialization_text}"
             )
 
-        elif normalized_msg == "2":
+        elif payload == "register_restart":
 
             session.temp_name             = None
             session.temp_email            = None
@@ -328,9 +324,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
         else:
 
             reply = (
-                "Please reply with:\n\n"
-                "1️⃣ Yes, confirm\n"
-                "2️⃣ No, start over"
+                "Please use the buttons above."
             )
 
     # =========================

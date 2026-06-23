@@ -361,6 +361,32 @@ def build_cancel_appointment_list(
         }
     }
 
+
+def build_registration_confirmation_buttons(
+    session
+):
+    return {
+        "message": (
+            "Please confirm your details:\n\n"
+            f"👤 Name: {session.temp_name}\n"
+            f"📧 Email: {session.temp_email}\n"
+            f"⚧ Gender: {session.temp_gender}\n"
+            f"🎂 Age: {session.temp_age}"
+        ),
+        "buttons": [
+            {
+                "title": "✅ Confirm",
+                "payload": "register_confirm"
+            },
+            {
+                "title": "🔄 Start Over",
+                "payload": "register_restart"
+            }
+        ]
+    }
+
+
+
 def build_cancel_confirmation_buttons(
     selected_appt
 ):
