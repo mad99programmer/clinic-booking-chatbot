@@ -386,7 +386,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                 f"Welcome {new_user.name} 👋\n\n"
             )
 
-            reply += start_booking_flow(
+            reply = start_booking_flow(
                 new_user,
                 session,
                 db
