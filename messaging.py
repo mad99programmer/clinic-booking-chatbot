@@ -360,3 +360,25 @@ def build_cancel_appointment_list(
             }
         }
     }
+
+def build_cancel_confirmation_buttons(
+    selected_appt
+):
+    return {
+        "message": (
+            f"Are you sure you want to cancel?\n\n"
+            f"👨‍⚕️ {selected_appt['doctor_name']}\n"
+            f"📅 {selected_appt['date']} "
+            f"at {selected_appt['time']}"
+        ),
+        "buttons": [
+            {
+                "title": "✅ Yes",
+                "payload": "cancel_yes"
+            },
+            {
+                "title": "❌ No",
+                "payload": "cancel_no"
+            }
+        ]
+    }

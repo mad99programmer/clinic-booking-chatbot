@@ -8,7 +8,7 @@ from crud import (
     get_available_sessions_v2
 )
 from validators import is_valid_name, is_valid_email, is_valid_age
-from messaging import (build_specialization_list,build_doctor_list,build_date_list,
+from messaging import (build_specialization_list,build_doctor_list,build_date_list,build_cancel_confirmation_buttons,
 build_session_list,build_slot_list_page,build_cancel_appointment_list,build_main_menu)
 from datetime import date
 
@@ -789,13 +789,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
                 db.commit()
 
-                reply = (
-                    f"Are you sure you want to cancel?\n\n"
-                    f"👨‍⚕️ {selected_appt['doctor_name']}\n"
-                    f"📅 {selected_appt['date']} "
-                    f"at {selected_appt['time']}\n\n"
-                    f"1️⃣ Yes, cancel it\n"
-                    f"2️⃣ No, keep it"
+                reply = build_cancel_confirmation_buttons(
+                    selected_appt
                 )
     # =========================
     # HANDLE CANCEL — CONFIRM
@@ -805,7 +800,8 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
         session.current_step == "confirming_cancel"
     ):
 
-        if normalized_msg == "1":
+        payload = effective_input
+        if payload == "cancel_yes":
 
             appointment = db.query(Appointment).filter(
                 Appointment.id == session.selected_slot_id
@@ -841,7 +837,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
                     "Reply *hi* to go back to the menu."
                 )
 
-        elif normalized_msg == "2":
+        elif payload == "cancel_no":
 
             session.current_step     = "idle"
             session.selected_slot_id = None
@@ -855,9 +851,7 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
         else:
 
             reply = (
-                "Please reply with:\n\n"
-                "1️⃣ Yes, cancel it\n"
-                "2️⃣ No, keep it"
+                "Please use the buttons above."
             )
 
     # =========================
