@@ -25,6 +25,102 @@ MENU_COMMANDS = [
     "4",
     "5"
 ]
+def start_booking_flow(
+    user,
+    session,
+    db
+):
+
+    all_doctors = db.query(
+        Doctor
+    ).all()
+
+    specializations = get_specializations(
+        db
+    )
+
+    # =========================
+    # CASE 1: Single Doctor
+    # =========================
+    if len(all_doctors) == 1:
+
+        only_doctor = all_doctors[0]
+
+        session.selected_doctor_id = (
+            only_doctor.id
+        )
+
+        session.current_step = (
+            "selecting_date"
+        )
+
+        db.commit()
+
+        available_dates = get_available_dates(
+            db,
+            only_doctor.id
+        )
+
+        if not available_dates:
+
+            session.current_step = "idle"
+            session.selected_doctor_id = None
+
+            db.commit()
+
+            return (
+                "😔 No slots available right now.\n\n"
+                "Please try again later."
+            )
+
+        return build_date_list(
+            available_dates
+        )
+
+    # =========================
+    # CASE 2: Single Specialization
+    # =========================
+    elif len(specializations) == 1:
+
+        only_specialization = (
+            specializations[0]
+        )
+
+        session.selected_specialization = (
+            only_specialization
+        )
+
+        session.current_step = (
+            "selecting_doctor"
+        )
+
+        db.commit()
+
+        doctors = get_doctors_by_specialization(
+            db,
+            only_specialization
+        )
+
+        return build_doctor_list(
+            doctors
+        )
+
+    # =========================
+    # CASE 3: Normal Flow
+    # =========================
+    else:
+
+        session.current_step = (
+            "selecting_specialization"
+        )
+
+        db.commit()
+
+        return build_specialization_list(
+            specializations,
+            user.name
+        )
+    
 
 # =========================
 # GET UPCOMING APPOINTMENTS
@@ -278,33 +374,24 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
             db.add(new_user)
 
-            session.temp_name             = None
-            session.temp_email            = None
-            session.temp_gender           = None
-            session.temp_age              = None
-            session.current_step          = "selecting_specialization"
+            session.temp_name   = None
+            session.temp_email  = None
+            session.temp_gender = None
+            session.temp_age    = None
 
             db.commit()
-
-            specializations = get_specializations(db)
-            specialization_text = ""
-
-            for index, specialization in enumerate(
-                specializations, start=1
-            ):
-                specialization_text += f"{index}️⃣ {specialization}\n"
-
-            specialization_text += (
-                f"{len(specializations)+1}️⃣ "
-                f"Consult our AI Medical Receptionist\n"
-            )
 
             reply = (
                 f"✅ Registration completed!\n\n"
                 f"Welcome {new_user.name} 👋\n\n"
-                f"Choose specialization:\n\n"
-                f"{specialization_text}"
             )
+
+            reply += start_booking_flow(
+                new_user,
+                session,
+                db
+            )
+
 
         elif payload == "register_restart":
 
@@ -890,14 +977,14 @@ def process_message(user_number, incoming_msg, db,webhook_data=None):
 
         else:
 
-            specializations = get_specializations(db)
-            session.current_step = "selecting_specialization"
-            db.commit()
 
-            reply = build_specialization_list(
-                specializations,
-                user.name
+            reply = start_booking_flow(
+                user,
+                session,
+                db
             )
+                
+
 
     # =========================
     # CANCEL APPOINTMENT
