@@ -7,6 +7,13 @@ from messaging import send_reply
 from fastapi.staticfiles import StaticFiles
 from admin_routes import router as admin_router
 from auth_routes import router as auth_router
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+print("Server datetime :", datetime.now())
+print("UTC datetime    :", datetime.utcnow())
+print("IST datetime    :", datetime.now(ZoneInfo("Asia/Kolkata")))
 # =========================
 # CREATE TABLES
 # =========================
